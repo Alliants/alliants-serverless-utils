@@ -18,6 +18,12 @@ $ npm run bundle
 $ npm run offline
 ```
 
+### Offline Watch Mode
+
+```bash
+$ npm run offline -- --reloadHandler
+```
+
 ### Documentation
 
 ```bash
