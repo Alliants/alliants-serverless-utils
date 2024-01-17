@@ -14,7 +14,7 @@
     "tests/**/*.js"
   ],
   "exclude": [
-    "tests/snapshots",
+    "tests/__snapshots__/**/*",
     "node_modules"
   ]
 }
