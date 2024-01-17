@@ -1,0 +1,43 @@
+service: serverless-example
+
+plugins:
+  - alliants-serverless-tooling/plugins/bundle
+  - alliants-serverless-tooling/plugins/documentation
+  - alliants-serverless-tooling/plugins/bruno
+  - serverless-offline
+
+package:
+  individually: true
+  patterns:
+    - static/global.txt
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, '${env:stage, "dev"}'}
+
+custom:
+  documentation:
+    schemasPath: src/schemas/schemas.js
+    errorsPath: src/utils/errors.js
+    version: "1"
+    title: Example API
+    description: OpenAPI documentation.
+
+functions:
+  hello1:
+    handler: src/handlers/hello1.handler
+    package:
+      patterns:
+        - static/individual.txt
+    events:
+      - http:
+          path: hello1
+          method: get
+
+  hello2:
+    handler: src/handlers/hello2.handler
+    events:
+      - http:
+          path: hello2/{name}
+          method: get

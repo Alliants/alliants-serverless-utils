@@ -1,0 +1,8 @@
+example/node_modules
+example/dist
+example/docs
+example/bruno
+example/.serverless
+example/package-lock.json
+node_modules
+package-lock.json

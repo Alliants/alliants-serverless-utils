@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "scripts": {
+    "offline": "sls offline",
+    "bundle": "sls package --stage local",
+    "documentation": "sls openapi generate -o docs/openapi.json",
+    "bruno": "sls bruno generate"
+  },
+  "dependencies": {
+    "@joi/date": "^2.1.0",
+    "joi": "^17.11.1"
+  },
+  "devDependencies": {
+    "alliants-serverless-tooling": "file:..",
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.2"
+  }
+}
