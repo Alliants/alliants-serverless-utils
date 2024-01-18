@@ -263,7 +263,7 @@ export async function buildDocumentation(serverless) {
     })
   })
 
-  // Put the error schemas at the end, just like the other ASA API documents
+  // Put the error schemas at the end, just like the other API documents
   Object.keys(globalSchemas).forEach((name) => {
     // ErrorLocalSchema is only used locally and does not need to be in the documentation
     if (name !== 'ErrorLocalSchema') {
