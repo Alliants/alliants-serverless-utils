@@ -24,7 +24,9 @@ function patternToDir(pattern) {
   return result.join('/')
 }
 
-async function nodeZip(fromDir, zipPath) {
+async function nodeZip(funcName) {
+  const fromDir = `dist/${funcName}`
+  const zipPath = `.serverless/${funcName}.zip`
   const filesPathList = await new FDir().withRelativePaths().crawl(fromDir).withPromise()
   const zipArchive = archiver.create('zip')
   const output = fs.createWriteStream(zipPath)
@@ -36,15 +38,21 @@ async function nodeZip(fromDir, zipPath) {
     filesPathList.forEach((relativePath) => {
       const fullPath = path.resolve(path.join(process.cwd(), fromDir, relativePath))
       const stats = fs.statSync(fullPath)
-      if (stats.isDirectory()) {
-        return
-      }
+      if (stats.isDirectory()) return
 
       zipArchive.append(fs.readFileSync(fullPath), {
         name: relativePath,
         mode: stats.mode,
         date: new Date(0), // necessary to get the same hash when zipping the same content
       })
+    })
+
+    zipArchive.append(JSON.stringify({
+      name: funcName,
+      type: 'module',
+    }, null, 2), {
+      name: './package.json',
+      date: new Date(0),
     })
 
     zipArchive.finalize()
@@ -63,7 +71,7 @@ export default class ServerlessBundle {
   constructor(serverless) {
     this.serverless = serverless
 
-    /** @type {Map<string, import('esbuild').BuildContext>} */
+    /** @type {Map<string, { name: string, ctx: import('esbuild').BuildContext, handler: string }>} */
     this.contexts = new Map()
 
     // Declare the hooks our plugin is interested in
@@ -130,7 +138,15 @@ export default class ServerlessBundle {
         ...(userSettings?.copy || []),
       ]
 
-      const sourcemap = 'sourcemap' in userSettings ? userSettings.sourcemap : 'inline'
+      const {
+        sourcemap = 'inline',
+        external = [],
+        inject = [],
+        plugins = [],
+        banner = {
+          js: '',
+        },
+      } = userSettings
 
       const ctx = await esbuild.context({
         ...userSettings,
@@ -154,52 +170,61 @@ export default class ServerlessBundle {
           'oracledb',
           'pg-query-stream',
           'sqlite3',
-          ...(userSettings.external || []),
+          ...external,
         ],
+        inject: [
+          sourcemap && 'source-map-support/register.js',
+          ...inject,
+        ].filter(Boolean),
         banner: {
-          js: `${sourcemap ? 'import \'source-map-support/register.js\';\n' : ''}import { createRequire as topLevelCreateRequire } from 'module';\n const require = topLevelCreateRequire(import.meta.url);`,
+          js: `import { createRequire as topLevelCreateRequire } from 'module';\n const require = topLevelCreateRequire(import.meta.url);${banner.js}`,
         },
         plugins: [
           copyPaths.length && copy({
             paths: copyPaths,
           }),
-          ...(userSettings.plugins || []),
+          ...plugins,
         ].filter(Boolean),
       })
 
-      this.contexts.set(name, ctx)
+      this.contexts.set(name, {
+        name,
+        ctx,
+        // we need to keep the old handler path
+        handler: func.handler,
+      })
+
       func.handler = `${outdir}/${functionPath}.${handlerName}`
     }))
   }
 
   async build() {
-    await Promise.all(Array.from(this.contexts.values()).map(ctx => ctx.rebuild()))
+    await Promise.all(Array.from(this.contexts.values()).map(({ ctx }) => ctx.rebuild()))
   }
 
   async watch() {
-    if (this.serverless.processedInput.options.reloadHandler) {
-      const { functions } = this.serverless.service
-      await Promise.all(
-        Array.from(this.contexts.entries())
-          .filter(([name]) => {
-            return !!(functions[name].events.find(e => !!(e.http)))
-          })
-          .map(([_, ctx]) => ctx.watch()),
-      )
-    }
+    const { functions } = this.serverless.service
+    await Promise.all(
+      Array.from(this.contexts.values())
+        .filter(({ name }) => {
+          return !!(functions[name].events.find(e => !!(e.http)))
+        })
+        .map(({ ctx }) => ctx.watch()),
+    )
   }
 
   async dispose() {
-    await Promise.all(Array.from(this.contexts.values()).map(ctx => ctx.dispose()))
+    await Promise.all(Array.from(this.contexts.values()).map(({ ctx }) => ctx.dispose()))
   }
 
   async pack() {
     await Promise.all(
-      Array.from(this.contexts.keys())
-        .map(async (name) => {
-          await nodeZip(`dist/${name}`, `.serverless/${name}.zip`)
+      Array.from(this.contexts.values())
+        .map(async ({ name, handler }) => {
+          await nodeZip(name)
           const func = this.serverless.service.functions[name]
           const artifact = `.serverless/${name}.zip`
+          func.handler = handler
           if (func.package) {
             func.package.artifact = artifact
           } else {
