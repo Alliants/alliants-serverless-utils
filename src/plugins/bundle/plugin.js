@@ -177,7 +177,7 @@ export default class ServerlessBundle {
           ...inject,
         ].filter(Boolean),
         banner: {
-          js: `import { createRequire as topLevelCreateRequire } from 'module';\n const require = topLevelCreateRequire(import.meta.url);${banner.js}`,
+          js: `import { createRequire as topLevelCreateRequire } from 'module';\n const require = topLevelCreateRequire(import.meta.url);\n${banner.js}`,
         },
         plugins: [
           copyPaths.length && copy({
