@@ -47,6 +47,7 @@ export default (config = {}, ...eslintConfig) => antfu(
       'perfectionist/sort-named-exports': 'error',
       'perfectionist/sort-named-imports': 'error',
       'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
+      'style/quote-props': ['error', 'consistent-as-needed'],
       ...(config.rules || {}),
     },
   },
