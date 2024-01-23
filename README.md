@@ -1,11 +1,11 @@
-# alliants-serverless-tooling
+# alliants-serverless-utils
 
 Set of tools for serverless framework applications.
 
 ## Install
 
 ```bash
-$ npm install https://github.com/Alliants/alliants-serverless-tooling
+$ npm install https://github.com/Alliants/alliants-serverless-utils
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ $ npm install https://github.com/Alliants/alliants-serverless-tooling
 Create an eslint.config.js with:
 
 ```js
-import config from 'alliants-serverless-tooling/eslint'
+import config from 'alliants-serverless-utils/eslint'
 
 export default config(/** options */)
 ```
@@ -30,7 +30,7 @@ Add to your `serverless.yml`
 
 ```yml
 plugins:
-  - alliants-serverless-tooling/plugins/bundle
+  - alliants-serverless-utils/plugins/bundle
 
 package:
   individually: true
@@ -54,7 +54,7 @@ Add to your `serverless.yml`
 
 ```yml
 plugins:
-  - alliants-serverless-tooling/plugins/documentation
+  - alliants-serverless-utils/plugins/documentation
 
 custom:
   documentation:
@@ -85,8 +85,8 @@ Add to your `serverless.yml`
 
 ```yml
 plugins:
-  - alliants-serverless-tooling/plugins/documentation
-  - alliants-serverless-tooling/plugins/bruno
+  - alliants-serverless-utils/plugins/documentation
+  - alliants-serverless-utils/plugins/bruno
 
 custom:
   documentation:

@@ -1,9 +1,9 @@
 service: serverless-example
 
 plugins:
-  - alliants-serverless-tooling/plugins/bundle
-  - alliants-serverless-tooling/plugins/documentation
-  - alliants-serverless-tooling/plugins/bruno
+  - alliants-serverless-utils/plugins/bundle
+  - alliants-serverless-utils/plugins/documentation
+  - alliants-serverless-utils/plugins/bruno
   - serverless-offline
 
 package:
