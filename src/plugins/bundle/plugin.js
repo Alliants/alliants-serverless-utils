@@ -3,26 +3,13 @@ import path from 'node:path'
 import process from 'node:process'
 
 import archiver from 'archiver'
+import chokidar from 'chokidar'
+import cpy from 'cpy'
 import { deleteAsync } from 'del'
 import * as esbuild from 'esbuild'
-import copy from 'esbuild-plugin-copy-watch'
 import { fdir as FDir } from 'fdir'
 
 /** @typedef {import('serverless')} Serverless */
-
-function patternToDir(pattern) {
-  const segments = pattern.split('/')
-  const result = []
-  for (const segment of segments) {
-    if (segment.includes('*') || segment.includes('.')) {
-      break
-    }
-
-    result.push(segment)
-  }
-
-  return result.join('/')
-}
 
 async function nodeZip(funcName) {
   const fromDir = `dist/${funcName}`
@@ -64,6 +51,11 @@ async function nodeZip(funcName) {
   })
 }
 
+function log(...args) {
+  process.stdout.write(args.join(' '))
+}
+
+const OUTDIR = 'dist'
 export default class ServerlessBundle {
   /**
    * @param {Serverless} serverless
@@ -71,8 +63,18 @@ export default class ServerlessBundle {
   constructor(serverless) {
     this.serverless = serverless
 
-    /** @type {Map<string, { name: string, ctx: import('esbuild').BuildContext, handler: string }>} */
-    this.contexts = new Map()
+    /** @type {Map<string, string>} */
+    this.prevFunctionHandlersPath = new Map()
+
+    /** @type {import('esbuild').BuildContext} */
+    this.ctx = null
+
+    /** @type {import('chokidar').FSWatcher>} */
+    this.watcher = null
+    /** @type {Map<string, import('chokidar').FSWatcher>} */
+    this.functionWatchers = new Set()
+    /** @type {Set<Promise>} */
+    this.cpyJobs = new Set()
 
     // Declare the hooks our plugin is interested in
     this.hooks = {
@@ -105,9 +107,7 @@ export default class ServerlessBundle {
   }
 
   async init() {
-    const outputDir = 'dist'
-
-    await deleteAsync(outputDir)
+    await deleteAsync(OUTDIR)
 
     const mod = await import(`${process.cwd()}/bundle.config.js`).catch(() => {})
     let userSettings = {}
@@ -117,110 +117,82 @@ export default class ServerlessBundle {
 
     const { functions, package: pkg } = this.serverless.service
 
-    const baseCopyPaths = pkg?.patterns?.map(pattern => ({
-      from: pattern,
-      to: patternToDir(pattern),
-    })) || []
+    const {
+      sourcemap = 'inline',
+      external = [],
+      inject = [],
+      plugins = [],
+      banner = {
+        js: '',
+      },
+    } = userSettings
 
-    await Promise.all(Object.keys(functions).map(async (name) => {
+    this._addCopyWatcher(pkg?.patterns)
+
+    const entryPoints = Object.keys(functions).map((name) => {
       const func = functions[name]
+      const [functionPath] = func.handler.split('.')
+      this.prevFunctionHandlersPath.set(name, func.handler)
+      func.handler = `${OUTDIR}/${name}/${func.handler}`
+      this._addCopyWatcher(func?.package?.patterns, `${OUTDIR}/${name}`)
+      return `${functionPath}.js`
+    })
 
-      const outdir = `${outputDir}/${name}`
-
-      const [functionPath, handlerName] = func.handler.split('.')
-
-      const copyPaths = [
-        ...baseCopyPaths,
-        ...(func?.package?.patterns?.map(pattern => ({
-          from: pattern,
-          to: patternToDir(pattern),
-        })) || []),
-        ...(userSettings?.copy || []),
-      ]
-
-      const {
-        sourcemap = 'inline',
-        external = [],
-        inject = [],
-        plugins = [],
-        banner = {
-          js: '',
-        },
-      } = userSettings
-
-      const ctx = await esbuild.context({
-        ...userSettings,
-        entryPoints: [`${functionPath}.js`],
-        bundle: true,
-        platform: 'node',
-        target: 'node20',
-        format: 'esm',
-        outbase: './',
-        treeShaking: true,
-        outdir,
-        keepNames: true,
-        sourcemap,
-        minify: this.serverless.configurationInput.provider.stage !== 'local',
-        external: [
-          'aws-sdk',
-          'better-sqlite3',
-          'tedious',
-          'mysql',
-          'mysql2',
-          'oracledb',
-          'pg-query-stream',
-          'sqlite3',
-          ...external,
-        ],
-        inject: [
-          sourcemap && 'source-map-support/register.js',
-          ...inject,
-        ].filter(Boolean),
-        banner: {
-          js: `import { createRequire as topLevelCreateRequire } from 'module';\n const require = topLevelCreateRequire(import.meta.url);\n${banner?.js}`,
-        },
-        plugins: [
-          copyPaths.length && copy({
-            paths: copyPaths,
-          }),
-          ...plugins,
-        ].filter(Boolean),
-      })
-
-      this.contexts.set(name, {
-        name,
-        ctx,
-        // we need to keep the old handler path
-        handler: func.handler,
-      })
-
-      func.handler = `${outdir}/${functionPath}.${handlerName}`
-    }))
+    this.ctx = await esbuild.context({
+      ...userSettings,
+      entryPoints,
+      entryNames: '[name]/[dir]/[name]',
+      bundle: true,
+      platform: 'node',
+      target: 'node20',
+      format: 'esm',
+      outbase: './',
+      treeShaking: true,
+      outdir: OUTDIR,
+      keepNames: true,
+      sourcemap,
+      minify: this.serverless.configurationInput.provider.stage !== 'local',
+      external: [
+        'aws-sdk',
+        'better-sqlite3',
+        'tedious',
+        'mysql',
+        'mysql2',
+        'oracledb',
+        'pg-query-stream',
+        'sqlite3',
+        ...external,
+      ],
+      inject: [
+        sourcemap && 'source-map-support/register.js',
+        ...inject,
+      ].filter(Boolean),
+      banner: {
+        js: `import { createRequire as topLevelCreateRequire } from 'module';\n const require = topLevelCreateRequire(import.meta.url);\n${banner?.js}`,
+      },
+      plugins: plugins.filter(Boolean),
+    })
   }
 
   async build() {
-    await Promise.all(Array.from(this.contexts.values()).map(({ ctx }) => ctx.rebuild()))
+    await Promise.all(Array.from(this.cpyJobs.values()))
+    await this.ctx.rebuild()
   }
 
   async watch() {
-    const { functions } = this.serverless.service
-    await Promise.all(
-      Array.from(this.contexts.values())
-        .filter(({ name }) => {
-          return !!(functions[name].events.find(e => !!(e.http)))
-        })
-        .map(({ ctx }) => ctx.watch()),
-    )
+    await this.ctx.watch()
   }
 
   async dispose() {
-    await Promise.all(Array.from(this.contexts.values()).map(({ ctx }) => ctx.dispose()))
+    await this.ctx.dispose()
+    await this?.watcher?.close()
+    await Promise.all(Array.from(this.functionWatchers.values()).map(watcher => watcher.close()))
   }
 
   async pack() {
     await Promise.all(
-      Array.from(this.contexts.values())
-        .map(async ({ name, handler }) => {
+      Array.from(this.prevFunctionHandlersPath.entries())
+        .map(async ([name, handler]) => {
           await nodeZip(name)
           const func = this.serverless.service.functions[name]
           const artifact = `.serverless/${name}.zip`
@@ -234,5 +206,44 @@ export default class ServerlessBundle {
           }
         }),
     )
+  }
+
+  _addCopyWatcher(patterns, outdir) {
+    if (!patterns || patterns.length === 0) return
+
+    const watcher = chokidar.watch(patterns, {
+      persistent: true,
+    })
+
+    if (!outdir) {
+      this.watcher = watcher
+      const onFile = (pathname) => {
+        Object.keys(this.serverless.service.functions).forEach((name) => {
+          const promise = cpy(pathname, `${OUTDIR}/${name}`)
+            .catch((err) => {
+              log(`ServerlessBundle copy error ['${pathname}']: ${err.message}`)
+            }).finally(() => {
+              this.cpyJobs.delete(promise)
+            })
+          this.cpyJobs.add(promise)
+        })
+      }
+      watcher.on('add', onFile)
+      watcher.on('change', onFile)
+      return
+    }
+
+    const onFile = (pathname) => {
+      const promise = cpy(pathname, outdir)
+        .catch((err) => {
+          log(`ServerlessBundle copy error ['${pathname}']: ${err.message}`)
+        }).finally(() => {
+          this.cpyJobs.delete(promise)
+        })
+      this.cpyJobs.add(promise)
+    }
+    watcher.on('add', onFile)
+    watcher.on('change', onFile)
+    this.functionWatchers.add(watcher)
   }
 }

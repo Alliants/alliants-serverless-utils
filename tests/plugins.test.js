@@ -21,7 +21,9 @@ beforeAll(async () => {
 
 const checkFile = async (filePath, binary = false) => {
   const content = await fs.readFile(path.resolve('./example', filePath), binary ? 'binary' : 'utf-8')
-  expect(content).toMatchFileSnapshot(path.resolve('./tests/__snapshots__', filePath))
+  expect(content).toMatchFileSnapshot(path.resolve('./tests/__snapshots__', filePath)).catch(() => {
+    throw new Error('not equal')
+  })
 }
 
 describe('serverless bundle', () => {
