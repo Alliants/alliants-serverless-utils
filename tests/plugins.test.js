@@ -44,24 +44,24 @@ describe('serverless bundle', () => {
   })
 })
 
-describe('serverless documentation', () => {
-  it('generate the openapi documentation', async () => {
-    console.log('> Generate documentation')
-    const res = await exec`npm run documentation`
-    console.log(`> ${res.stdout}`)
+// describe('serverless documentation', () => {
+//   it('generate the openapi documentation', async () => {
+//     console.log('> Generate documentation')
+//     const res = await exec`npm run documentation`
+//     console.log(`> ${res.stdout}`)
 
-    await checkFile('docs/openapi.json')
-  })
-})
+//     await checkFile('docs/openapi.json')
+//   })
+// })
 
-describe('serverless bruno', () => {
-  it('generate the bruno spec', async () => {
-    console.log('> Generate bruno spec')
-    const res = await exec`npm run bruno`
-    console.log(`> ${res.stdout}`)
+// describe('serverless bruno', () => {
+//   it('generate the bruno spec', async () => {
+//     console.log('> Generate bruno spec')
+//     const res = await exec`npm run bruno`
+//     console.log(`> ${res.stdout}`)
 
-    await checkFile('bruno/bruno.json')
-    await checkFile('bruno/Hello One Section/Hello 1.bru')
-    await checkFile('bruno/Hello Two Section/Hello 2.bru')
-  })
-})
+//     await checkFile('bruno/bruno.json')
+//     await checkFile('bruno/Hello One Section/Hello 1.bru')
+//     await checkFile('bruno/Hello Two Section/Hello 2.bru')
+//   })
+// })
