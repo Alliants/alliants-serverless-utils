@@ -11,8 +11,8 @@ import { fdir as FDir } from 'fdir'
 
 /** @typedef {import('serverless')} Serverless */
 
-async function nodeZip(funcName) {
-  const fromDir = `dist/${funcName}`
+async function nodeZip(funcName, filename) {
+  const fromDir = `dist/${filename}`
   const zipPath = `.serverless/${funcName}.zip`
   const filesPathList = await new FDir().withRelativePaths().crawl(fromDir).withPromise()
   const zipArchive = archiver.create('zip')
@@ -63,8 +63,8 @@ export default class ServerlessBundle {
   constructor(serverless) {
     this.serverless = serverless
 
-    /** @type {Map<string, string>} */
-    this.prevFunctionHandlersPath = new Map()
+    /** @type {Map<string, { handler: string, name: string, filename: string }>} */
+    this.functions = new Map()
 
     /** @type {import('esbuild').BuildContext} */
     this.ctx = null
@@ -127,16 +127,21 @@ export default class ServerlessBundle {
       },
     } = userSettings
 
-    this._addCopyWatcher(pkg?.patterns)
-
     const entryPoints = Object.keys(functions).map((name) => {
       const func = functions[name]
       const [functionPath] = func.handler.split('.')
-      this.prevFunctionHandlersPath.set(name, func.handler)
-      func.handler = `${OUTDIR}/${name}/${func.handler}`
-      this._addCopyWatcher(func?.package?.patterns, `${OUTDIR}/${name}`)
+      const filename = path.basename(functionPath)
+      this.functions.set(name, {
+        handler: func.handler,
+        name,
+        filename,
+      })
+      func.handler = `${OUTDIR}/${filename}/${func.handler}`
+      this._addCopyWatcher(func?.package?.patterns, `${OUTDIR}/${filename}`)
       return `${functionPath}.js`
     })
+
+    this._addCopyWatcher(pkg?.patterns)
 
     this.ctx = await esbuild.context({
       ...userSettings,
@@ -191,9 +196,9 @@ export default class ServerlessBundle {
 
   async pack() {
     await Promise.all(
-      Array.from(this.prevFunctionHandlersPath.entries())
-        .map(async ([name, handler]) => {
-          await nodeZip(name)
+      Array.from(this.functions.values())
+        .map(async ({ name, filename, handler }) => {
+          await nodeZip(name, filename)
           const func = this.serverless.service.functions[name]
           const artifact = `.serverless/${name}.zip`
           func.handler = handler
@@ -217,8 +222,12 @@ export default class ServerlessBundle {
 
     if (!outdir) {
       this.watcher = watcher
+      const filenames = Array.from(new Set(
+        Array.from(this.functions.values()).map(f => f.filename),
+      ).values())
+
       const onFile = (pathname) => {
-        Object.keys(this.serverless.service.functions).forEach((name) => {
+        filenames.forEach((name) => {
           const promise = cpy(pathname, `${OUTDIR}/${name}`)
             .catch((err) => {
               log(`ServerlessBundle copy error ['${pathname}']: ${err.message}`)
