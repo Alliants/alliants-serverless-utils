@@ -140,13 +140,13 @@ export async function buildDocumentation(serverless) {
     const handlerPath = resolve(process.cwd(), `${func.handler.slice(0, func.handler.indexOf('.'))}.js`)
 
     if (!handlerPath) {
-      break
+      continue
     }
 
     const { documentation: funcDoc, schema } = await import(handlerPath)
 
     if (!funcDoc) {
-      break
+      continue
     }
 
     if (schema) {
