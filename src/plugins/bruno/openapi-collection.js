@@ -3,15 +3,16 @@ import get from 'lodash/get.js'
 
 import { hydrateSeqInCollection, transformItemsInCollection, uuid, validateSchema } from './utils.js'
 
-function buildEmptyJsonBody(bodySchema) {
+function buildEmptyJsonBody(bodySchema, compoundName) {
   const _jsonBody = {}
   each(bodySchema.properties || {}, (prop, name) => {
+    const fullName = [compoundName, name].filter(Boolean).join('.')
     if (prop.type === 'object') {
-      _jsonBody[name] = buildEmptyJsonBody(prop)
+      _jsonBody[name] = buildEmptyJsonBody(prop, fullName)
     } else if (prop.type === 'array') {
-      _jsonBody[name] = []
+      _jsonBody[name] = `{{${fullName}}}`
     } else {
-      _jsonBody[name] = ''
+      _jsonBody[name] = `{{${fullName}}}`
     }
   })
   return _jsonBody
@@ -58,7 +59,7 @@ function transformOpenapiRequestItem(request) {
       brunoRequestItem.request.params.push({
         uid: uuid(),
         name: param.name,
-        value: '',
+        value: `{{${param.name}}}`,
         description: param.description || '',
         enabled: param.required,
       })
@@ -66,7 +67,7 @@ function transformOpenapiRequestItem(request) {
       brunoRequestItem.request.headers.push({
         uid: uuid(),
         name: param.name,
-        value: '',
+        value: `{{${param.name}}}`,
         description: param.description || '',
         enabled: param.required,
       })
