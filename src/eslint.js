@@ -61,5 +61,14 @@ export default (config = {}, ...eslintConfig) => antfu(
       ...(config.ignores || []),
     ],
   },
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      globals: {
+        __dirname: 'off',
+        __filename: 'off',
+      },
+    },
+  },
   ...eslintConfig,
 )
