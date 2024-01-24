@@ -58,6 +58,7 @@ export default (config = {}, ...eslintConfig) => antfu(
       'docs/',
       'coverage/',
       'dist/',
+      'bruno/',
       ...(config.ignores || []),
     ],
   },
