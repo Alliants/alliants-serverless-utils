@@ -12,6 +12,9 @@
     "./plugins/bundle": "./src/plugins/bundle/plugin.js",
     "./eslint": "./src/eslint.js"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "lint": "eslint .",
     "test": "vitest run"
