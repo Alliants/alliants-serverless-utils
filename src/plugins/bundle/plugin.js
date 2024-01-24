@@ -55,6 +55,10 @@ function log(...args) {
   process.stdout.write(args.join(' '))
 }
 
+function unique(arr) {
+  return Array.from(new Set(arr).values())
+}
+
 const OUTDIR = 'dist'
 export default class ServerlessBundle {
   /**
@@ -127,19 +131,21 @@ export default class ServerlessBundle {
       },
     } = userSettings
 
-    const entryPoints = Object.keys(functions).map((name) => {
-      const func = functions[name]
-      const [functionPath] = func.handler.split('.')
-      const filename = path.basename(functionPath)
-      this.functions.set(name, {
-        handler: func.handler,
-        name,
-        filename,
-      })
-      func.handler = `${OUTDIR}/${filename}/${func.handler}`
-      this._addCopyWatcher(func?.package?.patterns, `${OUTDIR}/${filename}`)
-      return `${functionPath}.js`
-    })
+    const entryPoints = unique(
+      Object.keys(functions).map((name) => {
+        const func = functions[name]
+        const [functionPath] = func.handler.split('.')
+        const filename = path.basename(functionPath)
+        this.functions.set(name, {
+          handler: func.handler,
+          name,
+          filename,
+        })
+        func.handler = `${OUTDIR}/${filename}/${func.handler}`
+        this._addCopyWatcher(func?.package?.patterns, `${OUTDIR}/${filename}`)
+        return `${functionPath}.js`
+      }),
+    )
 
     this._addCopyWatcher(pkg?.patterns)
 
@@ -222,9 +228,7 @@ export default class ServerlessBundle {
 
     if (!outdir) {
       this.watcher = watcher
-      const filenames = Array.from(new Set(
-        Array.from(this.functions.values()).map(f => f.filename),
-      ).values())
+      const filenames = unique(Array.from(this.functions.values()).map(f => f.filename))
 
       const onFile = (pathname) => {
         filenames.forEach((name) => {
