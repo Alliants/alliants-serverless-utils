@@ -25,12 +25,14 @@ function transformOpenapiRequestItem(request) {
     operationName = `${request.method} ${request.path}`
   }
 
+  const requestPath = request.path.startsWith('/') ? request.path.slice(1) : request.path
+
   const brunoRequestItem = {
     uid: uuid(),
     name: operationName,
     type: 'http-request',
     request: {
-      url: `{{url}}/${request.path}`,
+      url: `{{url}}/${requestPath}`,
       method: request.method.toUpperCase(),
       auth: {
         mode: 'none',
