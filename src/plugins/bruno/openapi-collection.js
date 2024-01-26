@@ -26,7 +26,11 @@ function transformOpenapiRequestItem(request) {
     operationName = `${request.method} ${request.path}`
   }
 
-  const requestPath = request.path.startsWith('/') ? request.path.slice(1) : request.path
+  let requestPath = request.path.startsWith('/') ? request.path.slice(1) : request.path
+
+  requestPath = requestPath
+    .replace(/\{/g, '{{')
+    .replace(/\}/g, '}}')
 
   const brunoRequestItem = {
     uid: uuid(),
