@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname } from 'node:path'
+import { resolve } from 'node:path/posix'
 import process from 'node:process'
 
 import SwaggerParser from '@apidevtools/swagger-parser'
