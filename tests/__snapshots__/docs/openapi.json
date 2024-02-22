@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "components": {
     "schemas": {
-      "Hello1Response": {
+      "HelloOneSchema": {
         "type": "object",
         "properties": {
           "hello1": {
@@ -14,7 +14,7 @@
         ],
         "additionalProperties": false
       },
-      "Hello2Response": {
+      "HelloTwoSchema": {
         "type": "object",
         "properties": {
           "hello2": {
@@ -318,7 +318,13 @@
         "responses": {
           "200": {
             "description": "An object returning hello1: true.",
-            "content": {}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelloOneSchema"
+                }
+              }
+            }
           },
           "400": {
             "description": "An error message when getting hello 1. The examples show all possible `code` and `message` values, not limited to this endpoint.",
@@ -561,7 +567,13 @@
         "responses": {
           "200": {
             "description": "An object returning hello2: true.",
-            "content": {}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelloTwoSchema"
+                }
+              }
+            }
           },
           "400": {
             "description": "An error message when getting getting hello 2. The examples show all possible `code` and `message` values, not limited to this endpoint.",

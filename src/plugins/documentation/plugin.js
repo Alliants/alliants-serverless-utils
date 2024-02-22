@@ -157,35 +157,39 @@ export async function buildDocumentation(serverless) {
       addParams(schema, funcDoc, 'requestHeaders')
 
       if (schema.body) {
-        const name = `${func.name.charAt(0).toUpperCase()}${func.name.slice(1)}Request`
-        documentation.custom.models.push(createModel(toJSONSchema(schema.body), name))
-        if (!funcDoc.requestModels) {
+        let name
+
+        if (!funcDoc.requestModels || !(funcDoc.requestModels['application/json'])) {
+          name = `${func.name.charAt(0).toUpperCase()}${func.name.slice(1)}Request`
           funcDoc.requestModels = {
             'application/json': name,
           }
+        } else {
+          name = funcDoc.requestModels['application/json']
         }
+
+        documentation.custom.models.push(createModel(toJSONSchema(schema.body), name))
       }
 
-      const resSuccess = funcDoc?.methodResponses?.filter(res => String(res.statusCode).startsWith('2'))
+      const resSuccess = funcDoc?.methodResponses?.find(res => String(res.statusCode).startsWith('2'))
+      if (!(resSuccess)) throw new Error(`missing succesfull methodResponses for ${func.name}`)
+
+      let nameResponse
+      if (!(resSuccess.responseModels) || !(resSuccess.responseModels['application/json'])) {
+        nameResponse = `${func.name.charAt(0).toUpperCase()}${func.name.slice(1)}Response`
+        resSuccess.responseModels = {
+          'application/json': nameResponse,
+        }
+      } else {
+        nameResponse = resSuccess.responseModels['application/json']
+      }
 
       if (schema.response) {
-        const name = `${func.name.charAt(0).toUpperCase()}${func.name.slice(1)}Response`
-        documentation.custom.models.push(createModel(toJSONSchema(schema.response), name))
-        resSuccess?.forEach((res) => {
-          if (!res.responseModels) {
-            res.responseModels = {
-              'application/json': name,
-            }
-          }
-        })
+        documentation.custom.models.push(createModel(toJSONSchema(schema.response), nameResponse))
       }
 
-      if (schema.responseHeaders) {
-        resSuccess?.forEach((res) => {
-          if (!res.responseHeaders) {
-            addParams(schema, res, 'responseHeaders')
-          }
-        })
+      if (schema.responseHeaders && !(resSuccess?.responseHeaders)) {
+        addParams(schema, resSuccess, 'responseHeaders')
       }
     }
 
