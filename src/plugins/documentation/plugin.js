@@ -332,13 +332,15 @@ export async function buildDocumentation(serverless) {
 
   await SwaggerParser.validate(JSON.parse(JSON.stringify(definition)))
 
-  // If for any endpoint there is a 204 response, then we want to delete the content object if it is empty
+  // If for any endpoint there is a 204/303 response, then we want to delete the content object if it is empty
   Object.keys(definition.paths).forEach((path) => {
     Object.keys(definition.paths[path]).forEach((method) => {
       const response = definition.paths[path][method].responses
-      if (response['204'] && response['204'].content && Object.keys(response['204'].content).length === 0) {
-        delete response['204'].content
-      }
+      ;['204', '303'].forEach((code) => {
+        if (response[code] && response[code].content && Object.keys(response[code].content).length === 0) {
+          delete response[code].content
+        }
+      })
     })
   })
 
