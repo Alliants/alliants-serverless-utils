@@ -171,8 +171,8 @@ export async function buildDocumentation(serverless) {
         documentation.custom.models.push(createModel(toJSONSchema(schema.body), name))
       }
 
-      const resSuccess = funcDoc?.methodResponses?.find(res => String(res.statusCode).startsWith('2'))
-      if (!(resSuccess)) throw new Error(`missing succesfull methodResponses for ${func.name}`)
+      const resSuccess = funcDoc?.methodResponses?.find(res => String(res.statusCode).startsWith('2') || String(res.statusCode).startsWith('3'))
+      if (!(resSuccess)) throw new Error(`missing successful methodResponses for ${func.name}`)
 
       let nameResponse
       if (!(resSuccess.responseModels) || !(resSuccess.responseModels['application/json'])) {

@@ -5,3 +5,4 @@ example/bruno
 example/.serverless
 node_modules
 package-lock.json
+.idea
