@@ -207,7 +207,7 @@ export function sanitizeDirectoryName(name) {
 
 export function createDirectory(dir) {
   if (!dir) {
-    throw new Error(`directory: path is null`)
+    throw new Error('directory: path is null')
   }
 
   if (fs.existsSync(dir)) {
