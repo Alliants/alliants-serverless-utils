@@ -168,7 +168,15 @@ export async function buildDocumentation(serverless) {
           name = funcDoc.requestModels['application/json']
         }
 
-        documentation.custom.models.push(createModel(toJSONSchema(schema.body), name))
+        const jsonSchema = toJSONSchema(schema.body)
+
+        const reqExamples = Object.entries(funcDoc.requestBody?.content?.['application/json']?.examples || {})
+
+        if (reqExamples.length > 0) {
+          jsonSchema.examples = reqExamples.map(([title, value]) => ({ title, value: value.value, summary: value.summary }))
+        }
+
+        documentation.custom.models.push(createModel(jsonSchema, name))
       }
 
       const resSuccess = funcDoc?.methodResponses?.find(res => String(res.statusCode).startsWith('2') || String(res.statusCode).startsWith('3'))

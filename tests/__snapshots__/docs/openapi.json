@@ -26,6 +26,30 @@
         ],
         "additionalProperties": false
       },
+      "Hello3Request": {
+        "type": "object",
+        "properties": {
+          "hello3": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hello3"
+        ],
+        "additionalProperties": false
+      },
+      "HelloThreeSchema": {
+        "type": "object",
+        "properties": {
+          "hello3": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hello3"
+        ],
+        "additionalProperties": false
+      },
       "ErrorResponse": {
         "type": "object",
         "properties": {
@@ -707,6 +731,279 @@
           },
           "500": {
             "description": "A server error when getting getting hello 2. The examples show all possible `code` and `message` values, not limited to this endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                },
+                "examples": {
+                  "DB001 - Error connecting to the database": {
+                    "value": {
+                      "code": "DB001",
+                      "message": "Error connecting to the database",
+                      "statusCode": 500
+                    }
+                  },
+                  "DB002 - Error deleting from the database": {
+                    "value": {
+                      "code": "DB002",
+                      "message": "Error deleting from the database",
+                      "statusCode": 500
+                    }
+                  },
+                  "DB003 - Error inserting to the database": {
+                    "value": {
+                      "code": "DB003",
+                      "message": "Error inserting to the database",
+                      "statusCode": 500
+                    }
+                  },
+                  "DB004 - Error querying the database": {
+                    "value": {
+                      "code": "DB004",
+                      "message": "Error querying the database",
+                      "statusCode": 500
+                    }
+                  },
+                  "DB005 - Error updating the database": {
+                    "value": {
+                      "code": "DB005",
+                      "message": "Error updating the database",
+                      "statusCode": 500
+                    }
+                  },
+                  "DB006 - Error with the database": {
+                    "value": {
+                      "code": "DB006",
+                      "message": "Error with the database",
+                      "statusCode": 500
+                    }
+                  },
+                  "DB007 - Error upserting to the database": {
+                    "value": {
+                      "code": "DB007",
+                      "message": "Error upserting to the database",
+                      "statusCode": 500
+                    }
+                  },
+                  "DE000 - Unexpected error": {
+                    "value": {
+                      "code": "DE000",
+                      "message": "Unexpected error",
+                      "statusCode": 500
+                    }
+                  },
+                  "DE002 - Unexpected error (5XX)": {
+                    "value": {
+                      "code": "DE002",
+                      "message": "Unexpected error (5XX)",
+                      "statusCode": 500
+                    }
+                  },
+                  "DE007 - Operation failed": {
+                    "value": {
+                      "code": "DE007",
+                      "message": "Operation failed",
+                      "statusCode": 500
+                    }
+                  },
+                  "DE008 - Connection failed": {
+                    "value": {
+                      "code": "DE008",
+                      "message": "Connection failed",
+                      "statusCode": 500
+                    }
+                  },
+                  "TR000 - An error occurred": {
+                    "value": {
+                      "code": "TR000",
+                      "message": "An error occurred",
+                      "statusCode": 500
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hello3": {
+      "post": {
+        "operationId": "hello3",
+        "summary": "Hello 3",
+        "description": "Hello 3 template.",
+        "tags": [
+          "Hello Two Section"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Hello3Request"
+              },
+              "examples": {
+                "Example1": {
+                  "value": {
+                    "hello3": "some-example-1"
+                  },
+                  "summary": "Example 1"
+                },
+                "Example2": {
+                  "value": {
+                    "hello3": "some-example-2"
+                  },
+                  "summary": "Example 2"
+                }
+              }
+            }
+          },
+          "description": "Heelo 3 request body"
+        },
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "An object returning hello3 request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelloThreeSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An error message when getting getting hello 3. The examples show all possible `code` and `message` values, not limited to this endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "DE001 - Unexpected error (4XX)": {
+                    "value": {
+                      "code": "DE001",
+                      "message": "Unexpected error (4XX)",
+                      "statusCode": 400
+                    }
+                  },
+                  "PA001 - Parameter error": {
+                    "value": {
+                      "code": "PA001",
+                      "message": "Parameter error",
+                      "statusCode": 400
+                    }
+                  },
+                  "PA002 - Parameter missing": {
+                    "value": {
+                      "code": "PA002",
+                      "message": "Parameter missing",
+                      "statusCode": 400
+                    }
+                  },
+                  "PA003 - Body is invalid JSON string": {
+                    "value": {
+                      "code": "PA003",
+                      "message": "Body is invalid JSON string",
+                      "statusCode": 400
+                    }
+                  },
+                  "PA004 - Request body missing or empty": {
+                    "value": {
+                      "code": "PA004",
+                      "message": "Request body missing or empty",
+                      "statusCode": 400
+                    }
+                  },
+                  "PA005 - Validation failed - see info for more details": {
+                    "value": {
+                      "code": "PA005",
+                      "message": "Validation failed - see info for more details",
+                      "statusCode": 400,
+                      "info": {
+                        "errors": [
+                          {
+                            "message": "\"Last Onboarded\" must be a boolean",
+                            "path": [
+                              "lastOnboarded"
+                            ],
+                            "type": "boolean.base",
+                            "context": {
+                              "label": "Last Onboarded",
+                              "value": 2,
+                              "key": "lastOnboarded"
+                            },
+                            "paramType": "body"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "PA007 - Already exists": {
+                    "value": {
+                      "code": "PA007",
+                      "message": "Already exists",
+                      "statusCode": 400
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorised user when getting getting hello 3. The examples show all possible `code` and `message` values, not limited to this endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                },
+                "examples": {
+                  "AU002 - Invalid credentials": {
+                    "value": {
+                      "code": "AU002",
+                      "message": "Invalid credentials",
+                      "statusCode": 401
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found when getting getting hello 3. The examples show all possible `code` and `message` values, not limited to this endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "examples": {
+                  "AU001 - User not found": {
+                    "value": {
+                      "code": "AU001",
+                      "message": "User not found",
+                      "statusCode": 404
+                    }
+                  },
+                  "DE006 - Page not found": {
+                    "value": {
+                      "code": "DE006",
+                      "message": "Page not found",
+                      "statusCode": 404
+                    }
+                  },
+                  "DE009 - Item not found": {
+                    "value": {
+                      "code": "DE009",
+                      "message": "Item not found",
+                      "statusCode": 404
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A server error when getting getting hello 3. The examples show all possible `code` and `message` values, not limited to this endpoint.",
             "content": {
               "application/json": {
                 "schema": {

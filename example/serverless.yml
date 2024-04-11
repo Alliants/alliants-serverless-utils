@@ -41,3 +41,10 @@ functions:
       - http:
           path: hello2/{name}
           method: get
+
+  hello3:
+    handler: src/handlers/hello3.handler
+    events:
+      - http:
+          path: hello3
+          method: post
