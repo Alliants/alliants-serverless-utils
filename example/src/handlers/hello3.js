@@ -25,19 +25,19 @@ const documentation = {
           Example1: {
             summary: 'Example 1',
             value: {
-              hello3: 'some-example-1'
-            }
+              hello3: 'some-example-1',
+            },
           },
           Example2: {
             summary: 'Example 2',
             value: {
-              hello3: 'some-example-2'
-            }
+              hello3: 'some-example-2',
+            },
           },
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 }
 
 const schema = {
