@@ -18,7 +18,7 @@ const documentation = {
     ...generateErrorResponses([400, 401, 404, 500], 'getting getting hello 3'),
   ],
   requestBody: {
-    description: 'Heelo 3 request body',
+    description: 'Hello 3 request body',
     content: {
       'application/json': {
         examples: {
