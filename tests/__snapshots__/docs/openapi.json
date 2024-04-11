@@ -843,17 +843,17 @@
                 "$ref": "#/components/schemas/Hello3Request"
               },
               "examples": {
-                "Example1": {
+                "RequestExample1": {
                   "value": {
-                    "hello3": "some-example-1"
+                    "hello3": "request-example-1"
                   },
-                  "summary": "Example 1"
+                  "summary": "RequestExample 1"
                 },
-                "Example2": {
+                "RequestExample2": {
                   "value": {
-                    "hello3": "some-example-2"
+                    "hello3": "request-example-2"
                   },
-                  "summary": "Example 2"
+                  "summary": "Request Example 2"
                 }
               }
             }
@@ -863,11 +863,25 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "An object returning hello3 request body.",
+            "description": "An object returning hello3 response body.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HelloThreeSchema"
+                },
+                "examples": {
+                  "ResponseExample1": {
+                    "value": {
+                      "hello3": "response-example-1"
+                    },
+                    "summary": "Response Example 1"
+                  },
+                  "ResponseExample2": {
+                    "value": {
+                      "hello3": "response-example-2"
+                    },
+                    "summary": "Response Example 2"
+                  }
                 }
               }
             }

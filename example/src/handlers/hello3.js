@@ -9,7 +9,25 @@ const documentation = {
     {
       statusCode: 200,
       responseBody: {
-        description: 'An object returning hello3 request body.',
+        description: 'An object returning hello3 response body.',
+        content: {
+          'application/json': {
+            examples: {
+              ResponseExample1: {
+                summary: 'Response Example 1',
+                value: {
+                  hello3: 'response-example-1',
+                },
+              },
+              ResponseExample2: {
+                summary: 'Response Example 2',
+                value: {
+                  hello3: 'response-example-2',
+                },
+              },
+            },
+          },
+        },
       },
       responseModels: {
         'application/json': 'HelloThreeSchema',
@@ -22,16 +40,16 @@ const documentation = {
     content: {
       'application/json': {
         examples: {
-          Example1: {
-            summary: 'Example 1',
+          RequestExample1: {
+            summary: 'RequestExample 1',
             value: {
-              hello3: 'some-example-1',
+              hello3: 'request-example-1',
             },
           },
-          Example2: {
-            summary: 'Example 2',
+          RequestExample2: {
+            summary: 'Request Example 2',
             value: {
-              hello3: 'some-example-2',
+              hello3: 'request-example-2',
             },
           },
         },
