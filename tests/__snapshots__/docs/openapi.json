@@ -858,7 +858,7 @@
               }
             }
           },
-          "description": "Heelo 3 request body"
+          "description": "Hello 3 request body"
         },
         "parameters": [],
         "responses": {
