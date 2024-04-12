@@ -168,7 +168,16 @@ export async function buildDocumentation(serverless) {
           name = funcDoc.requestModels['application/json']
         }
 
-        documentation.custom.models.push(createModel(toJSONSchema(schema.body), name))
+        const jsonBodySchema = toJSONSchema(schema.body)
+
+        // Request examples
+        const requestExamples = Object.entries(funcDoc.requestBody?.content?.['application/json']?.examples || {})
+
+        if (requestExamples.length > 0) {
+          jsonBodySchema.examples = requestExamples.map(([title, value]) => ({ title, value: value.value, summary: value.summary }))
+        }
+
+        documentation.custom.models.push(createModel(jsonBodySchema, name))
       }
 
       const resSuccess = funcDoc?.methodResponses?.find(res => String(res.statusCode).startsWith('2') || String(res.statusCode).startsWith('3'))
@@ -185,7 +194,16 @@ export async function buildDocumentation(serverless) {
       }
 
       if (schema.response) {
-        documentation.custom.models.push(createModel(toJSONSchema(schema.response), nameResponse))
+        const jsonResponseSchema = toJSONSchema(schema.response)
+
+        // Response examples
+        const responseExamples = Object.entries(resSuccess.responseBody?.content?.['application/json']?.examples || {})
+
+        if (responseExamples.length > 0) {
+          jsonResponseSchema.examples = responseExamples.map(([title, value]) => ({ title, value: value.value, summary: value.summary }))
+        }
+
+        documentation.custom.models.push(createModel(jsonResponseSchema, nameResponse))
       }
 
       if (schema.responseHeaders && !(resSuccess?.responseHeaders)) {
