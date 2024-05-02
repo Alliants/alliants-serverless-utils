@@ -20,29 +20,29 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@antfu/eslint-config": "^2.11.0",
+    "@antfu/eslint-config": "^2.16.1",
     "@apidevtools/swagger-parser": "^10.1.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
-    "@usebruno/lang": "^0.11.0",
+    "@usebruno/lang": "^0.12.0",
     "@usebruno/schema": "^0.7.0",
     "archiver": "^7.0.1",
     "chokidar": "^3.6.0",
     "cpy": "^11.0.1",
     "del": "^7.1.0",
     "esbuild": "^0.20.2",
-    "eslint-plugin-format": "^0.1.0",
+    "eslint-plugin-format": "^0.1.1",
     "fdir": "^6.1.1",
-    "joi": "^17.11.2",
+    "joi": "^17.13.1",
     "joi-to-swagger": "^6.2.0",
     "js-yaml": "^4.1.0",
     "json-to-pretty-yaml": "^1.2.2",
     "lodash": "^4.17.21",
-    "nanoid": "^5.0.6",
+    "nanoid": "^5.0.7",
     "source-map-support": "^0.5.21"
   },
   "devDependencies": {
     "decompress": "^4.2.1",
     "execa": "^8.0.1",
-    "vitest": "^1.4.0"
+    "vitest": "^1.5.3"
   }
 }
