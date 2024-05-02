@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run -u"
   },
   "dependencies": {
     "@antfu/eslint-config": "^2.16.1",
@@ -32,7 +32,7 @@
     "esbuild": "^0.20.2",
     "eslint-plugin-format": "^0.1.1",
     "fdir": "^6.1.1",
-    "joi": "^17.13.0",
+    "joi": "^17.13.1",
     "joi-to-swagger": "^6.2.0",
     "js-yaml": "^4.1.0",
     "json-to-pretty-yaml": "^1.2.2",
