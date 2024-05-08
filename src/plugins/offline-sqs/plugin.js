@@ -12,13 +12,13 @@ export default class OfflineSQS extends ServerlessSQSOffline {
       .withExposedPorts({
         host: port,
         container: port,
-      }, {
-        host: 9325,
-        container: 9325,
-      })
-      .withName('test-sqs')
+      }, 9325)
+      .withName(`${this.serverless.service.service}-sqs`)
       .withReuse()
       .start()
+
+    // eslint-disable-next-line no-console
+    console.log(`> offline-sqs: http://localhost:${this.elasticContainer.getMappedPort(9325)}`)
 
     const client = new SQSClient({
       region,
@@ -29,13 +29,28 @@ export default class OfflineSQS extends ServerlessSQSOffline {
       },
     })
 
-    await client.send(new CreateQueueCommand({
-      QueueName: `${this.serverless.service.custom['email-queue'].dlqQueueName}.fifo`,
-      Attributes: {
-        FifoQueue: 'true',
-        ContentBasedDeduplication: 'true',
-      },
-    }))
+    const queues = this.serverless.service.custom.queues
+    for (const queueName of Object.keys(queues)) {
+      if (queues[queueName].queueName) {
+        await client.send(new CreateQueueCommand({
+          QueueName: `${queues[queueName].queueName}.fifo`,
+          Attributes: {
+            FifoQueue: 'true',
+            ContentBasedDeduplication: 'true',
+          },
+        }))
+      }
+
+      if (queues[queueName].dlqQueueName) {
+        await client.send(new CreateQueueCommand({
+          QueueName: `${queues[queueName].dlqQueueName}.fifo`,
+          Attributes: {
+            FifoQueue: 'true',
+            ContentBasedDeduplication: 'true',
+          },
+        }))
+      }
+    }
 
     await super.start()
   }
