@@ -10,6 +10,7 @@
     "./plugins/bruno": "./src/plugins/bruno/plugin.js",
     "./plugins/documentation": "./src/plugins/documentation/plugin.js",
     "./plugins/bundle": "./src/plugins/bundle/plugin.js",
+    "./plugins/offline-sqs": "./src/plugins/offline-sqs/plugin.js",
     "./eslint": "./src/eslint.js"
   },
   "files": [
