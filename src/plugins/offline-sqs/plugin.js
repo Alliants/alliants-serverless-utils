@@ -11,7 +11,7 @@ export default class OfflineSQS extends ServerlessSQSOffline {
     this.elasticContainer = await new GenericContainer('softwaremill/elasticmq-native')
       .withExposedPorts({
         host: port,
-        container: port,
+        container: 9324,
       }, 9325)
       .withName(`${this.serverless.service.service}-sqs`)
       .withReuse()
