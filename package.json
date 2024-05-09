@@ -10,6 +10,7 @@
     "./plugins/bruno": "./src/plugins/bruno/plugin.js",
     "./plugins/documentation": "./src/plugins/documentation/plugin.js",
     "./plugins/bundle": "./src/plugins/bundle/plugin.js",
+    "./plugins/offline-sqs": "./src/plugins/offline-sqs/plugin.js",
     "./eslint": "./src/eslint.js"
   },
   "files": [
@@ -22,6 +23,7 @@
   "dependencies": {
     "@antfu/eslint-config": "^2.16.1",
     "@apidevtools/swagger-parser": "^10.1.0",
+    "@aws-sdk/client-sqs": "^3.572.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
     "@usebruno/lang": "^0.12.0",
     "@usebruno/schema": "^0.7.0",
@@ -38,7 +40,9 @@
     "json-to-pretty-yaml": "^1.2.2",
     "lodash": "^4.17.21",
     "nanoid": "^5.0.7",
-    "source-map-support": "^0.5.21"
+    "serverless-offline-sqs": "^8.0.0",
+    "source-map-support": "^0.5.21",
+    "testcontainers": "^10.9.0"
   },
   "devDependencies": {
     "decompress": "^4.2.1",

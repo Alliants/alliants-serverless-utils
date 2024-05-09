@@ -102,3 +102,34 @@ To generate the bruno spec execute:
 ```bash
 $ npx sls bruno generate
 ```
+
+### Offline SQS Plugin
+
+Plugin to run an instance of SQS locally.
+
+Add to your `serverless.yml`
+
+```yml
+plugins:
+  - alliants-serverless-utils/plugins/offline-sqs
+
+custom:
+  serverless-offline-sqs:
+    autoCreate: true
+    apiVersion: 2012-11-05
+    endpoint: http://localhost:9324
+    region: us-east-1
+    accessKeyId: root
+    secretAccessKey: root
+    skipCacheInvalidation: false
+  queues:
+    test-queue:
+      queueName: test_queue
+      dlqQueueName: dlq_test_queue
+```
+
+After running `sls offline` the plugin is going to start an SQS docker container and you will see a log message like:
+
+`> offline-sqs: http://localhost:<port>`
+
+You can go there to check the queues created in a dashboard.

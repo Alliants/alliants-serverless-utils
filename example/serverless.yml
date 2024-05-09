@@ -4,6 +4,7 @@ plugins:
   - alliants-serverless-utils/plugins/bundle
   - alliants-serverless-utils/plugins/documentation
   - alliants-serverless-utils/plugins/bruno
+  - alliants-serverless-utils/plugins/offline-sqs
   - serverless-offline
 
 package:
@@ -23,6 +24,18 @@ custom:
     version: "1"
     title: Example API
     description: OpenAPI documentation.
+  serverless-offline-sqs: # Visit http://localhost:9324/?Action=ListQueues locally to list queues
+    autoCreate: true
+    apiVersion: 2012-11-05
+    endpoint: http://localhost:9324
+    region: us-east-1
+    accessKeyId: root
+    secretAccessKey: root
+    skipCacheInvalidation: false
+  queues:
+    test-queue:
+      queueName: test_queue
+      dlqQueueName: dlq_test_queue
 
 functions:
   hello1:
