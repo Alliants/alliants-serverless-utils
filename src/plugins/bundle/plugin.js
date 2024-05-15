@@ -90,6 +90,14 @@ export default class ServerlessBundle {
       'after:package:createDeploymentArtifacts': async () => {
         await this.dispose()
       },
+      'before:deploy:function:packageFunction': async () => {
+        await this.init()
+        await this.build()
+        await this.pack()
+      },
+      'after:deploy:function:packageFunction': async () => {
+        await this.dispose()
+      },
       'before:offline:start': async () => {
         await this.init()
         await this.build()
