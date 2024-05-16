@@ -1,3 +1,4 @@
+/* eslint-disable regexp/no-unused-capturing-group */
 import fs from 'node:fs'
 
 import { collectionSchema } from '@usebruno/schema'
