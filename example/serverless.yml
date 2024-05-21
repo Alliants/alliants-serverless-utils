@@ -25,7 +25,6 @@ custom:
     title: Example API
     description: OpenAPI documentation.
   serverless-offline-sqs: # Visit http://localhost:9324/?Action=ListQueues locally to list queues
-    autoCreate: true
     apiVersion: 2012-11-05
     endpoint: http://localhost:9324
     region: us-east-1

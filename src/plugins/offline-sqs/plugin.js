@@ -7,6 +7,15 @@ import ServerlessSQSOffline from 'serverless-offline-sqs'
 import { GenericContainer } from 'testcontainers'
 
 export default class OfflineSQS extends ServerlessSQSOffline {
+  constructor(...args) {
+    super(...args)
+
+    if ('serverless-offline-sqs' in this.serverless.service.custom) {
+      // disable the autoCreate
+      this.serverless.service.custom['serverless-offline-sqs'].autoCreate = false
+    }
+  }
+
   async start() {
     const { endpoint, region } = this.serverless.service.custom['serverless-offline-sqs']
     const port = endpoint.split(':').pop()
@@ -33,16 +42,15 @@ export default class OfflineSQS extends ServerlessSQSOffline {
 
     const queues = this.serverless.service.custom.queues
     for (const queueName of Object.keys(queues)) {
-      // The principal queue is created by the original plugin
-      // if (queues[queueName].queueName) {
-      //   await client.send(new CreateQueueCommand({
-      //     QueueName: `${queues[queueName].queueName}.fifo`,
-      //     Attributes: {
-      //       FifoQueue: 'true',
-      //       ContentBasedDeduplication: 'true',
-      //     },
-      //   }))
-      // }
+      if (queues[queueName].queueName) {
+        await client.send(new CreateQueueCommand({
+          QueueName: `${queues[queueName].queueName}.fifo`,
+          Attributes: {
+            FifoQueue: 'true',
+            ContentBasedDeduplication: 'true',
+          },
+        }))
+      }
 
       if (queues[queueName].dlqQueueName) {
         await client.send(new CreateQueueCommand({
