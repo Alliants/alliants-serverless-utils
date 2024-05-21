@@ -26,7 +26,7 @@ custom:
     description: OpenAPI documentation.
   serverless-offline-sqs: # Visit http://localhost:9324/?Action=ListQueues locally to list queues
     apiVersion: 2012-11-05
-    endpoint: http://localhost:9324
+    endpoint: http://localhost:9333
     region: us-east-1
     accessKeyId: root
     secretAccessKey: root

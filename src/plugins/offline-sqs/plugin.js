@@ -20,7 +20,7 @@ export default class OfflineSQS extends ServerlessSQSOffline {
     const { endpoint, region } = this.serverless.service.custom['serverless-offline-sqs']
     const port = endpoint.split(':').pop()
 
-    if (!('DISABLE_TEST_CONTAINER' in process.env)) {
+    if (!(process.env.DISABLE_TEST_CONTAINER === '1' || process.env.DISABLE_TEST_CONTAINER === 'true')) {
       this.elasticContainer = await new GenericContainer('softwaremill/elasticmq-native')
         .withExposedPorts({
           host: port,
