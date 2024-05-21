@@ -22,9 +22,6 @@ export default class OfflineSQS extends ServerlessSQSOffline {
         .start()
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`> offline-sqs: http://localhost:${this?.elasticContainer?.getMappedPort(9325) || 9325}`)
-
     const client = new SQSClient({
       region,
       endpoint: `http://localhost:${port}`,
@@ -36,15 +33,16 @@ export default class OfflineSQS extends ServerlessSQSOffline {
 
     const queues = this.serverless.service.custom.queues
     for (const queueName of Object.keys(queues)) {
-      if (queues[queueName].queueName) {
-        await client.send(new CreateQueueCommand({
-          QueueName: `${queues[queueName].queueName}.fifo`,
-          Attributes: {
-            FifoQueue: 'true',
-            ContentBasedDeduplication: 'true',
-          },
-        }))
-      }
+      // The principal queue is created by the original plugin
+      // if (queues[queueName].queueName) {
+      //   await client.send(new CreateQueueCommand({
+      //     QueueName: `${queues[queueName].queueName}.fifo`,
+      //     Attributes: {
+      //       FifoQueue: 'true',
+      //       ContentBasedDeduplication: 'true',
+      //     },
+      //   }))
+      // }
 
       if (queues[queueName].dlqQueueName) {
         await client.send(new CreateQueueCommand({
@@ -58,6 +56,9 @@ export default class OfflineSQS extends ServerlessSQSOffline {
     }
 
     await super.start()
+
+    // eslint-disable-next-line no-console
+    console.log(`> offline-sqs: http://localhost:${this?.elasticContainer?.getMappedPort(9325) || 9325}`)
   }
 
   async end() {
