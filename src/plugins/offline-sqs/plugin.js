@@ -1,5 +1,7 @@
 /** @typedef {import('serverless')} Serverless */
 
+import process from 'node:process'
+
 import { CreateQueueCommand, SQSClient } from '@aws-sdk/client-sqs'
 import ServerlessSQSOffline from 'serverless-offline-sqs'
 import { GenericContainer } from 'testcontainers'
@@ -8,17 +10,20 @@ export default class OfflineSQS extends ServerlessSQSOffline {
   async start() {
     const { endpoint, region } = this.serverless.service.custom['serverless-offline-sqs']
     const port = endpoint.split(':').pop()
-    this.elasticContainer = await new GenericContainer('softwaremill/elasticmq-native')
-      .withExposedPorts({
-        host: port,
-        container: 9324,
-      }, 9325)
-      .withName(`${this.serverless.service.service}-sqs`)
-      .withReuse()
-      .start()
+
+    if (!('DISABLE_TEST_CONTAINER' in process.env)) {
+      this.elasticContainer = await new GenericContainer('softwaremill/elasticmq-native')
+        .withExposedPorts({
+          host: port,
+          container: 9324,
+        }, 9325)
+        .withName(`${this.serverless.service.service}-sqs`)
+        .withReuse()
+        .start()
+    }
 
     // eslint-disable-next-line no-console
-    console.log(`> offline-sqs: http://localhost:${this.elasticContainer.getMappedPort(9325)}`)
+    console.log(`> offline-sqs: http://localhost:${this?.elasticContainer?.getMappedPort(9325) || port}`)
 
     const client = new SQSClient({
       region,
@@ -56,9 +61,7 @@ export default class OfflineSQS extends ServerlessSQSOffline {
   }
 
   async end() {
-    if (this.elasticContainer) {
-      await this.elasticContainer.stop()
-    }
+    await this?.elasticContainer?.stop()
     await super.end()
   }
 }
