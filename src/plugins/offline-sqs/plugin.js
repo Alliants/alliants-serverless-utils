@@ -23,7 +23,7 @@ export default class OfflineSQS extends ServerlessSQSOffline {
     }
 
     // eslint-disable-next-line no-console
-    console.log(`> offline-sqs: http://localhost:${this?.elasticContainer?.getMappedPort(9325) || port}`)
+    console.log(`> offline-sqs: http://localhost:${this?.elasticContainer?.getMappedPort(9325) || 9325}`)
 
     const client = new SQSClient({
       region,
