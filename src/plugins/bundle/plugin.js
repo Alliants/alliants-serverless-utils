@@ -290,10 +290,10 @@ export default class ServerlessBundle {
         banner: {
           js: [
             'import { createRequire as topLevelCreateRequire } from \'node:module\';',
-            'import { fileURLToPath as rootFileURLToPath } from \'node:url\';',
+            'import { fileURLToPath as rootFileURLToPath, URL as RootURL } from \'node:url\';',
             'const require = topLevelCreateRequire(import.meta.url);',
             'const __filename = rootFileURLToPath(import.meta.url);',
-            'const __dirname = rootFileURLToPath(new URL(\'.\', import.meta.url));',
+            'const __dirname = rootFileURLToPath(new RootURL(\'.\', import.meta.url));',
             banner?.js,
           ].filter(Boolean).join('\n'),
         },
