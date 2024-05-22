@@ -1,6 +1,8 @@
+import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 import archiver from 'archiver'
 import chokidar from 'chokidar'
@@ -8,8 +10,13 @@ import cpy from 'cpy'
 import { deleteAsync } from 'del'
 import * as esbuild from 'esbuild'
 import { fdir as FDir } from 'fdir'
+import debounce from 'p-debounce'
 
 /** @typedef {import('serverless')} Serverless */
+
+const OUTDIR = 'dist'
+
+const SLS_BIN = fileURLToPath(import.meta.resolve('serverless/bin/serverless.js'))
 
 async function nodeZip(funcName, filename) {
   const fromDir = `dist/${filename}`
@@ -52,14 +59,14 @@ async function nodeZip(funcName, filename) {
 }
 
 function log(...args) {
-  process.stdout.write(args.join(' '))
+  // eslint-disable-next-line no-console
+  console.log(...args)
 }
 
 function unique(arr) {
   return Array.from(new Set(arr).values())
 }
 
-const OUTDIR = 'dist'
 export default class ServerlessBundle {
   /**
    * @param {Serverless} serverless
@@ -92,10 +99,72 @@ export default class ServerlessBundle {
     /** @type {Promise<void>} */
     this.disposing = null
 
+    /** @type {ReturnType<spawn>} */
+    this.child = null
+
+    /** @type {boolean} */
+    this.devMode = false
+
+    /** @type {Promise<void>} */
+    this.initDevBuilding = false
+
+    const { functions } = this.serverless.service
+
+    /** @type {string[]} */
+    this.entryPoints = unique(
+      Object.keys(functions).map((name) => {
+        const func = functions[name]
+        const [functionPath] = func.handler.split('.')
+        const filename = path.basename(functionPath)
+        this.functions.set(name, {
+          handler: func.handler,
+          name,
+          filename,
+          patterns: func?.package?.patterns,
+        })
+        func.handler = `${OUTDIR}/${filename}/${func.handler}`
+        return `${functionPath}.js`
+      }),
+    )
+
+    /** @type {boolean} */
+    this.bundleOfflineDisabled = ['1', 'true'].includes(process.env.DISABLE_BUNDLE_OFFLINE)
+
+    this.commands = {
+      bundle: {
+        commands: {
+          generate: {
+            lifecycleEvents: ['serverless'],
+            usage: 'Bundle the project',
+          },
+          dev: {
+            lifecycleEvents: ['serverless'],
+            usage: 'Dev offline mode with watch',
+          },
+        },
+      },
+    }
+
     // Declare the hooks our plugin is interested in
     this.hooks = {
-      'before:package:createDeploymentArtifacts': async () => {
+      'bundle:generate:serverless': async () => {
+        log('> bundle:init')
         await this.init()
+        log('> bundle:building')
+        await this.build()
+        await this.dispose()
+        log('> bundle:done')
+      },
+      'bundle:dev:serverless': async () => {
+        this.devMode = true
+        this.initDevBuilding = true
+        await this.init()
+        await this.build()
+        this.initDevBuilding = false
+        await this._spawn()
+      },
+      'before:package:createDeploymentArtifacts': async () => {
+        await this.init({ splitting: false })
         await this.build()
         await this.pack()
       },
@@ -103,7 +172,7 @@ export default class ServerlessBundle {
         await this.dispose()
       },
       'before:deploy:function:packageFunction': async () => {
-        await this.init()
+        await this.init({ splitting: false })
         await this.build()
         await this.pack()
       },
@@ -111,26 +180,35 @@ export default class ServerlessBundle {
         await this.dispose()
       },
       'before:offline:start': async () => {
+        if (this.bundleOfflineDisabled) return
         await this.init()
         await this.build()
-        await this.watch()
+        await this.dispose()
       },
       'before:offline:start:init': async () => {
+        if (this.bundleOfflineDisabled) return
         await this.init()
         await this.build()
-        await this.watch()
+        await this.dispose()
       },
       'before:invoke:local:invoke': async () => {
+        if (this.bundleOfflineDisabled) return
         await this.init()
         await this.build()
       },
       'after:invoke:local:invoke': async () => {
+        if (this.bundleOfflineDisabled) return
         await this.dispose()
       },
     }
   }
 
-  async init() {
+  /**
+   * @param {{
+   *  splitting: boolean
+   * }} forceOptions
+   */
+  async init(forceOptions = {}) {
     if (this.initializing) return this.initializing
 
     const _init = async () => {
@@ -142,7 +220,7 @@ export default class ServerlessBundle {
         userSettings = await mod.default(this.serverless)
       }
 
-      const { functions, package: pkg } = this.serverless.service
+      const { package: pkg } = this.serverless.service
 
       const {
         sourcemap = 'inline',
@@ -152,31 +230,39 @@ export default class ServerlessBundle {
         banner = {
           js: '',
         },
+        watchDebounce = 1500,
       } = userSettings
 
-      const entryPoints = unique(
-        Object.keys(functions).map((name) => {
-          const func = functions[name]
-          const [functionPath] = func.handler.split('.')
-          const filename = path.basename(functionPath)
-          this.functions.set(name, {
-            handler: func.handler,
-            name,
-            filename,
-          })
-          func.handler = `${OUTDIR}/${filename}/${func.handler}`
-          this._addCopyWatcher(func?.package?.patterns, `${OUTDIR}/${filename}`)
-          return `${functionPath}.js`
-        }),
-      )
+      this._spawn = debounce(async () => {
+        if (!this.devMode || this.initDevBuilding) return
+
+        if (this.child && !(this.child.killed)) {
+          log('> Offline Reload')
+          this.child.kill('SIGHUP')
+          await new Promise(resolve => this.child.once('exit', () => resolve()))
+        }
+
+        this.child = spawn('node', [SLS_BIN, 'offline', 'start', '--useInProcess'], {
+          env: {
+            ...process.env,
+            DISABLE_BUNDLE_OFFLINE: 1,
+          },
+          stdio: [0, 1, 2],
+        })
+      }, watchDebounce)
+
+      this.functions.forEach((func) => {
+        this._addCopyWatcher(func.patterns, `${OUTDIR}/${func.filename}`)
+      })
 
       this._addCopyWatcher(pkg?.patterns)
 
       this.ctx = await esbuild.context({
         ...userSettings,
-        entryPoints,
+        entryPoints: this.entryPoints,
         entryNames: '[name]/[dir]/[name]',
         bundle: true,
+        splitting: 'splitting' in forceOptions ? forceOptions.splitting : true,
         platform: 'node',
         target: 'node20',
         format: 'esm',
@@ -211,7 +297,15 @@ export default class ServerlessBundle {
             banner?.js,
           ].filter(Boolean).join('\n'),
         },
-        plugins: plugins.filter(Boolean),
+        plugins: [...plugins.filter(Boolean), {
+          name: 'devMode',
+          setup: (build) => {
+            if (!this.devMode) return
+            build.onEnd(() => {
+              return this._spawn()
+            })
+          },
+        }],
       })
     }
 
@@ -224,7 +318,11 @@ export default class ServerlessBundle {
 
     const _build = async () => {
       await Promise.all(Array.from(this.cpyJobs.values()))
-      await this.ctx.rebuild()
+      if (this.devMode) {
+        await this?.ctx?.watch()
+      } else {
+        await this?.ctx?.rebuild()
+      }
     }
 
     this.building = _build()
@@ -232,7 +330,7 @@ export default class ServerlessBundle {
   }
 
   async watch() {
-    await this.ctx.watch()
+    await this?.ctx?.watch()
   }
 
   async dispose() {
@@ -293,6 +391,7 @@ export default class ServerlessBundle {
       const onFile = (pathname) => {
         filenames.forEach((name) => {
           const promise = cpy(pathname, `${OUTDIR}/${name}`)
+            .then(() => this._spawn())
             .catch((err) => {
               log(`ServerlessBundle copy error ['${pathname}']: ${err.message}`)
             }).finally(() => {
@@ -308,6 +407,7 @@ export default class ServerlessBundle {
 
     const onFile = (pathname) => {
       const promise = cpy(pathname, outdir)
+        .then(() => this._spawn())
         .catch((err) => {
           log(`ServerlessBundle copy error ['${pathname}']: ${err.message}`)
         }).finally(() => {
