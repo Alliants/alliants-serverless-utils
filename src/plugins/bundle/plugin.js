@@ -108,24 +108,8 @@ export default class ServerlessBundle {
     /** @type {Promise<void>} */
     this.initDevBuilding = false
 
-    const { functions } = this.serverless.service
-
     /** @type {string[]} */
-    this.entryPoints = unique(
-      Object.keys(functions).map((name) => {
-        const func = functions[name]
-        const [functionPath] = func.handler.split('.')
-        const filename = path.basename(functionPath)
-        this.functions.set(name, {
-          handler: func.handler,
-          name,
-          filename,
-          patterns: func?.package?.patterns,
-        })
-        func.handler = `${OUTDIR}/${filename}/${func.handler}`
-        return `${functionPath}.js`
-      }),
-    )
+    this.entryPoints = null
 
     /** @type {boolean} */
     this.bundleOfflineDisabled = ['1', 'true'].includes(process.env.DISABLE_BUNDLE_OFFLINE)
@@ -148,6 +132,7 @@ export default class ServerlessBundle {
     // Declare the hooks our plugin is interested in
     this.hooks = {
       'bundle:generate:serverless': async () => {
+        this.renameFunctions()
         log('> bundle:init')
         await this.init()
         log('> bundle:building')
@@ -156,6 +141,7 @@ export default class ServerlessBundle {
         log('> bundle:done')
       },
       'bundle:dev:serverless': async () => {
+        this.renameFunctions()
         this.devMode = true
         this.initDevBuilding = true
         await this.init()
@@ -164,6 +150,7 @@ export default class ServerlessBundle {
         await this._spawn()
       },
       'before:package:createDeploymentArtifacts': async () => {
+        this.renameFunctions()
         await this.init({ splitting: false })
         await this.build()
         await this.pack()
@@ -172,6 +159,7 @@ export default class ServerlessBundle {
         await this.dispose()
       },
       'before:deploy:function:packageFunction': async () => {
+        this.renameFunctions()
         await this.init({ splitting: false })
         await this.build()
         await this.pack()
@@ -180,18 +168,21 @@ export default class ServerlessBundle {
         await this.dispose()
       },
       'before:offline:start': async () => {
+        this.renameFunctions()
         if (this.bundleOfflineDisabled) return
         await this.init()
         await this.build()
         await this.dispose()
       },
       'before:offline:start:init': async () => {
+        this.renameFunctions()
         if (this.bundleOfflineDisabled) return
         await this.init()
         await this.build()
         await this.dispose()
       },
       'before:invoke:local:invoke': async () => {
+        this.renameFunctions()
         if (this.bundleOfflineDisabled) return
         await this.init()
         await this.build()
@@ -201,6 +192,29 @@ export default class ServerlessBundle {
         await this.dispose()
       },
     }
+  }
+
+  renameFunctions() {
+    if (this.entryPoints) return
+
+    const { functions } = this.serverless.service
+
+    /** @type {string[]} */
+    this.entryPoints = unique(
+      Object.keys(functions).map((name) => {
+        const func = functions[name]
+        const [functionPath] = func.handler.split('.')
+        const filename = path.basename(functionPath)
+        this.functions.set(name, {
+          handler: func.handler,
+          name,
+          filename,
+          patterns: func?.package?.patterns,
+        })
+        func.handler = `${OUTDIR}/${filename}/${func.handler}`
+        return `${functionPath}.js`
+      }),
+    )
   }
 
   /**
