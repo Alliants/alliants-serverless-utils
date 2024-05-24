@@ -49,6 +49,10 @@ functions:
 
   hello2:
     handler: src/handlers/hello2.handler
+    package:
+      patterns:
+        # you can use : to define a different destination
+        - "static/individual.txt:asset"
     events:
       - http:
           path: hello2/{name}

@@ -21,9 +21,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@antfu/eslint-config": "^2.16.1",
+    "@antfu/eslint-config": "^2.18.1",
     "@apidevtools/swagger-parser": "^10.1.0",
-    "@aws-sdk/client-sqs": "^3.572.0",
+    "@aws-sdk/client-sqs": "^3.583.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
     "@usebruno/lang": "^0.12.0",
     "@usebruno/schema": "^0.7.0",
@@ -31,9 +31,8 @@
     "chokidar": "^3.6.0",
     "cpy": "^11.0.1",
     "del": "^7.1.0",
-    "esbuild": "^0.20.2",
+    "esbuild": "^0.21.3",
     "eslint-plugin-format": "^0.1.1",
-    "fdir": "^6.1.1",
     "joi": "^17.13.1",
     "joi-to-swagger": "^6.2.0",
     "js-yaml": "^4.1.0",
@@ -41,13 +40,14 @@
     "lodash": "^4.17.21",
     "nanoid": "^5.0.7",
     "p-debounce": "^4.0.0",
+    "picomatch": "^4.0.2",
     "serverless-offline-sqs": "^8.0.0",
     "source-map-support": "^0.5.21",
     "testcontainers": "^10.9.0"
   },
   "devDependencies": {
     "decompress": "^4.2.1",
-    "execa": "^8.0.1",
-    "vitest": "^1.5.3"
+    "execa": "^9.1.0",
+    "vitest": "^1.6.0"
   }
 }

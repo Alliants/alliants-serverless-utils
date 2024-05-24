@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { once } from 'node:events'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
@@ -9,37 +10,37 @@ import chokidar from 'chokidar'
 import cpy from 'cpy'
 import { deleteAsync } from 'del'
 import * as esbuild from 'esbuild'
-import { fdir as FDir } from 'fdir'
 import debounce from 'p-debounce'
-
+import picomatch from 'picomatch'
 /** @typedef {import('serverless')} Serverless */
 
 const OUTDIR = 'dist'
 
 const SLS_BIN = fileURLToPath(import.meta.resolve('serverless/bin/serverless.js'))
 
-async function nodeZip(funcName, filename) {
-  const fromDir = `dist/${filename}`
+async function nodeZip(funcName, baseFilename) {
   const zipPath = `.serverless/${funcName}.zip`
-  const filesPathList = await new FDir().withRelativePaths().crawl(fromDir).withPromise()
   const zipArchive = archiver.create('zip')
   const output = fs.createWriteStream(zipPath)
 
   // write zip
-  output.on('open', () => {
+  output.on('open', async () => {
     zipArchive.pipe(output)
 
-    filesPathList.forEach((relativePath) => {
-      const fullPath = path.resolve(path.join(process.cwd(), fromDir, relativePath))
-      const stats = fs.statSync(fullPath)
-      if (stats.isDirectory()) return
-
+    const watcher = chokidar.watch('.', {
+      alwaysStat: true,
+      cwd: path.resolve(process.cwd(), 'dist', baseFilename),
+    })
+    watcher.on('add', (filePath, stats) => {
+      const fullPath = path.resolve(process.cwd(), 'dist', baseFilename, filePath)
       zipArchive.append(fs.readFileSync(fullPath), {
-        name: relativePath,
+        name: filePath,
         mode: stats.mode,
         date: new Date(0), // necessary to get the same hash when zipping the same content
       })
     })
+    await once(watcher, 'ready')
+    await watcher.close()
 
     zipArchive.append(JSON.stringify({
       name: funcName,
@@ -74,7 +75,7 @@ export default class ServerlessBundle {
   constructor(serverless) {
     this.serverless = serverless
 
-    /** @type {Map<string, { handler: string, name: string, filename: string }>} */
+    /** @type {Map<string, { handler: string, name: string, filename: string, patterns: string[] }>} */
     this.functions = new Map()
 
     /** @type {import('esbuild').BuildContext} */
@@ -82,8 +83,7 @@ export default class ServerlessBundle {
 
     /** @type {import('chokidar').FSWatcher>} */
     this.watcher = null
-    /** @type {Map<string, import('chokidar').FSWatcher>} */
-    this.functionWatchers = new Set()
+
     /** @type {Set<Promise>} */
     this.cpyJobs = new Set()
 
@@ -104,9 +104,6 @@ export default class ServerlessBundle {
 
     /** @type {boolean} */
     this.devMode = false
-
-    /** @type {Promise<void>} */
-    this.initDevBuilding = false
 
     /** @type {string[]} */
     this.entryPoints = null
@@ -143,10 +140,8 @@ export default class ServerlessBundle {
       'bundle:dev:serverless': async () => {
         this.renameFunctions()
         this.devMode = true
-        this.initDevBuilding = true
         await this.init()
         await this.build()
-        this.initDevBuilding = false
         await this._spawn()
       },
       'before:package:createDeploymentArtifacts': async () => {
@@ -234,8 +229,6 @@ export default class ServerlessBundle {
         userSettings = await mod.default(this.serverless)
       }
 
-      const { package: pkg } = this.serverless.service
-
       const {
         sourcemap = 'inline',
         external = [],
@@ -248,7 +241,7 @@ export default class ServerlessBundle {
       } = userSettings
 
       this._spawn = debounce(async () => {
-        if (!this.devMode || this.initDevBuilding) return
+        if (!this.devMode) return
 
         if (this.child && !(this.child.killed)) {
           log('> Offline Reload')
@@ -264,12 +257,6 @@ export default class ServerlessBundle {
           stdio: [0, 1, 2],
         })
       }, watchDebounce)
-
-      this.functions.forEach((func) => {
-        this._addCopyWatcher(func.patterns, `${OUTDIR}/${func.filename}`)
-      })
-
-      this._addCopyWatcher(pkg?.patterns)
 
       this.ctx = await esbuild.context({
         ...userSettings,
@@ -331,7 +318,7 @@ export default class ServerlessBundle {
     if (this.building) return this.building
 
     const _build = async () => {
-      await Promise.all(Array.from(this.cpyJobs.values()))
+      await this._addCopyWatcher()
       if (this.devMode) {
         await this?.ctx?.watch()
       } else {
@@ -357,7 +344,6 @@ export default class ServerlessBundle {
 
       await this?.ctx?.dispose()
       await this?.watcher?.close()
-      await Promise.all(Array.from(this.functionWatchers.values()).map(watcher => watcher.close()))
     }
 
     this.disposing = _dispose()
@@ -391,46 +377,95 @@ export default class ServerlessBundle {
     return this.packing
   }
 
-  _addCopyWatcher(patterns, outdir) {
-    if (!patterns || patterns.length === 0) return
+  async _addCopyWatcher() {
+    const { package: pkg } = this.serverless.service
 
-    const watcher = chokidar.watch(patterns, {
+    const globs = []
+    const globalPatterns = []
+    const patternsByHandler = []
+
+    pkg?.patterns?.forEach((pattern) => {
+      const [glob, dest = ''] = pattern.split(':')
+      globs.push(glob)
+      globalPatterns.push({ isMatch: picomatch(glob), dest })
+    })
+
+    this.functions.forEach((func) => {
+      func?.patterns?.forEach((pattern) => {
+        const [glob, dest = ''] = pattern.split(':')
+        globs.push(glob)
+        patternsByHandler.push({ isMatch: picomatch(glob), filename: func.filename, dest })
+      })
+    })
+
+    this.watcher = chokidar.watch(globs, {
       persistent: true,
     })
 
-    if (!outdir) {
-      this.watcher = watcher
-      const filenames = unique(Array.from(this.functions.values()).map(f => f.filename))
+    let initCopy = true
+    const initialCopyFiles = []
 
-      const onFile = (pathname) => {
-        filenames.forEach((name) => {
-          const promise = cpy(pathname, `${OUTDIR}/${name}`)
-            .then(() => this._spawn())
+    const onFile = (filePath) => {
+      globalPatterns.forEach(({ isMatch, dest }) => {
+        if (!isMatch(filePath)) return
+
+        dest = dest || path.dirname(filePath)
+
+        if (initCopy) {
+          this.functions.forEach((func) => {
+            initialCopyFiles.push({ filePath, destPath: path.resolve(OUTDIR, func.filename, dest) })
+          })
+          return
+        }
+
+        this.functions.forEach((func) => {
+          const destPath = path.resolve(OUTDIR, func.filename, dest)
+          const promise = cpy(filePath, destPath)
             .catch((err) => {
-              log(`ServerlessBundle copy error ['${pathname}']: ${err.message}`)
+              log(`ServerlessBundle copy error ['${destPath}']: ${err.message}`)
             }).finally(() => {
               this.cpyJobs.delete(promise)
             })
           this.cpyJobs.add(promise)
         })
-      }
-      watcher.on('add', onFile)
-      watcher.on('change', onFile)
-      return
+      })
+
+      patternsByHandler.forEach(({ isMatch, filename, dest }) => {
+        if (!isMatch(filePath)) return
+
+        const destPath = path.resolve(OUTDIR, filename, dest || path.dirname(filePath))
+
+        if (initCopy) {
+          initialCopyFiles.push({ filePath, destPath })
+          return
+        }
+
+        const promise = cpy(filePath, destPath)
+          .catch((err) => {
+            log(`ServerlessBundle copy error ['${destPath}']: ${err.message}`)
+          }).finally(() => {
+            this.cpyJobs.delete(promise)
+          })
+        this.cpyJobs.add(promise)
+      })
+
+      Promise.all(Array.from(this.cpyJobs.values())).then(() => this._spawn())
     }
 
-    const onFile = (pathname) => {
-      const promise = cpy(pathname, outdir)
-        .then(() => this._spawn())
+    this.watcher.on('add', onFile)
+    this.watcher.on('change', onFile)
+    await once(this.watcher, 'ready')
+    initCopy = false
+
+    await Promise.all(initialCopyFiles.map((file) => {
+      const promise = cpy(file.filePath, file.destPath)
         .catch((err) => {
-          log(`ServerlessBundle copy error ['${pathname}']: ${err.message}`)
+          log(`ServerlessBundle copy error ['${file.destPath}']: ${err.message}`)
         }).finally(() => {
           this.cpyJobs.delete(promise)
         })
       this.cpyJobs.add(promise)
-    }
-    watcher.on('add', onFile)
-    watcher.on('change', onFile)
-    this.functionWatchers.add(watcher)
+      return promise
+    }))
   }
 }
