@@ -16,7 +16,7 @@ beforeAll(async () => {
     'example/docs',
   ])
   console.log('> Installing dependencies')
-  const res = await exec`npm install`
+  const res = await exec`npm ci`
   console.log(`> ${res.stdout}`)
 })
 
