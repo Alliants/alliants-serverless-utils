@@ -3,13 +3,13 @@ import { antfu } from '@antfu/eslint-config'
 /** @type {typeof antfu} */
 export default (config = {}, ...eslintConfig) => antfu(
   {
-    ...config,
     ignores: [],
     typescript: false,
     jsx: false,
+    ...config,
     formatters: {
       markdown: true,
-      ...(config.formatters || {}),
+      ...(typeof config.formatters === 'object' ? config.formatters : {}),
     },
     rules: {
       'antfu/if-newline': 0,
