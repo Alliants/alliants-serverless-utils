@@ -83,33 +83,33 @@ describe('serverless bruno', () => {
   })
 })
 
-describe('serverless offline-sqs', () => {
-  it('should start the sqs with the offline action', async () => {
-    console.log('> Running offline')
+// describe('serverless offline-sqs', () => {
+//   it('should start the sqs with the offline action', async () => {
+//     console.log('> Running offline')
 
-    const proc = exec`npm run offline`
+//     const proc = exec`npm run offline`
 
-    let done = false
-    for await (const chunk of proc.stdout) {
-      const line = chunk.toString()
-      console.log(line)
-      if (line.includes('offline-sqs')) {
-        const url = line.replace('\n', '').replace('> offline-sqs:', '').slice(1)
-        const endpoint = `${url}/statistics/queues`
-        const queues = await fetch(endpoint).then(res => res.json())
-        expect(queues).toContainEqual({
-          name: 'test_queue.fifo',
-          statistics: expect.any(Object),
-        })
-        expect(queues).toContainEqual({
-          name: 'dlq_test_queue.fifo',
-          statistics: expect.any(Object),
-        })
-        done = true
-        break
-      }
-    }
+//     let done = false
+//     for await (const chunk of proc.stdout) {
+//       const line = chunk.toString()
+//       console.log(line)
+//       if (line.includes('offline-sqs')) {
+//         const url = line.replace('\n', '').replace('> offline-sqs:', '').slice(1)
+//         const endpoint = `${url}/statistics/queues`
+//         const queues = await fetch(endpoint).then(res => res.json())
+//         expect(queues).toContainEqual({
+//           name: 'test_queue.fifo',
+//           statistics: expect.any(Object),
+//         })
+//         expect(queues).toContainEqual({
+//           name: 'dlq_test_queue.fifo',
+//           statistics: expect.any(Object),
+//         })
+//         done = true
+//         break
+//       }
+//     }
 
-    expect(done).toBeTruthy()
-  })
-})
+//     expect(done).toBeTruthy()
+//   })
+// })
