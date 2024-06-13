@@ -39,6 +39,7 @@
     "json-to-pretty-yaml": "^1.2.2",
     "lodash": "^4.17.21",
     "nanoid": "^5.0.7",
+    "p-all": "^5.0.0",
     "p-debounce": "^4.0.0",
     "picomatch": "^4.0.2",
     "serverless-offline-sqs": "^8.0.0",

@@ -4,7 +4,8 @@
     "offline": "sls offline",
     "bundle": "sls package --stage local",
     "documentation": "sls openapi generate -o docs/openapi.json",
-    "bruno": "sls bruno generate"
+    "bruno": "sls bruno generate",
+    "dev": "sls bundle dev"
   },
   "dependencies": {
     "@joi/date": "^2.1.1",
