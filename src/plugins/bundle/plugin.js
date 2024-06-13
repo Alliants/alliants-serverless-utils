@@ -10,6 +10,7 @@ import chokidar from 'chokidar'
 import cpy from 'cpy'
 import { deleteAsync } from 'del'
 import * as esbuild from 'esbuild'
+import pAll from 'p-all'
 import debounce from 'p-debounce'
 import picomatch from 'picomatch'
 /** @typedef {import('serverless')} Serverless */
@@ -111,6 +112,12 @@ export default class ServerlessBundle {
     /** @type {boolean} */
     this.bundleOfflineDisabled = ['1', 'true'].includes(process.env.DISABLE_BUNDLE_OFFLINE)
 
+    /** @type {import('esbuild').BuildOptions} */
+    this.bundleOptions = null
+
+    /** @type {{ watchDebounce?: number, concurrency?: number }} */
+    this.extraBundleOptions = null
+
     this.commands = {
       bundle: {
         commands: {
@@ -139,14 +146,13 @@ export default class ServerlessBundle {
       },
       'bundle:dev:serverless': async () => {
         this.renameFunctions()
-        this.devMode = true
         await this.init()
+        this.initDevMode()
         await this.build()
-        await this._spawn()
       },
       'before:package:createDeploymentArtifacts': async () => {
         this.renameFunctions()
-        await this.init({ splitting: false })
+        await this.init()
         await this.build()
         await this.pack()
       },
@@ -155,7 +161,7 @@ export default class ServerlessBundle {
       },
       'before:deploy:function:packageFunction': async () => {
         this.renameFunctions()
-        await this.init({ splitting: false })
+        await this.init()
         await this.build()
         await this.pack()
       },
@@ -212,12 +218,7 @@ export default class ServerlessBundle {
     )
   }
 
-  /**
-   * @param {{
-   *  splitting: boolean
-   * }} forceOptions
-   */
-  async init(forceOptions = {}) {
+  async init() {
     if (this.initializing) return this.initializing
 
     const _init = async () => {
@@ -238,32 +239,21 @@ export default class ServerlessBundle {
           js: '',
         },
         watchDebounce = 1500,
+        concurrency = ('SERVERLESS_BUNDLE_CONCURRENCY' in process.env ? Number(process.env.SERVERLESS_BUNDLE_CONCURRENCY) : 8),
       } = userSettings
 
-      this._spawn = debounce(async () => {
-        if (!this.devMode) return
+      delete userSettings.watchDebounce
+      delete userSettings.concurrency
 
-        if (this.child && !(this.child.killed)) {
-          log('> Offline Reload')
-          this.child.kill('SIGHUP')
-          await new Promise(resolve => this.child.once('exit', () => resolve()))
-        }
+      this.extraBundleOptions = {
+        watchDebounce,
+        concurrency,
+      }
 
-        this.child = spawn('node', [SLS_BIN, 'offline', 'start', '--useInProcess'], {
-          env: {
-            ...process.env,
-            DISABLE_BUNDLE_OFFLINE: 1,
-          },
-          stdio: [0, 1, 2],
-        })
-      }, watchDebounce)
-
-      this.ctx = await esbuild.context({
+      this.bundleOptions = {
         ...userSettings,
-        entryPoints: this.entryPoints,
         entryNames: '[name]/[dir]/[name]',
         bundle: true,
-        splitting: 'splitting' in forceOptions ? forceOptions.splitting : true,
         platform: 'node',
         target: 'node20',
         format: 'esm',
@@ -298,20 +288,41 @@ export default class ServerlessBundle {
             banner?.js,
           ].filter(Boolean).join('\n'),
         },
-        plugins: [...plugins.filter(Boolean), {
-          name: 'devMode',
-          setup: (build) => {
-            if (!this.devMode) return
-            build.onEnd(() => {
-              return this._spawn()
-            })
-          },
-        }],
-      })
+        plugins: plugins.filter(Boolean),
+      }
     }
 
     this.initializing = _init()
     return this.initializing
+  }
+
+  initDevMode() {
+    this.devMode = true
+
+    this._spawn = debounce(async () => {
+      if (this.child && !(this.child.killed)) {
+        log('> Offline Reload')
+        this.child.kill('SIGHUP')
+        await new Promise(resolve => this.child.once('exit', () => resolve()))
+      }
+
+      this.child = spawn('node', [SLS_BIN, 'offline', 'start', '--useInProcess'], {
+        env: {
+          ...process.env,
+          DISABLE_BUNDLE_OFFLINE: 1,
+        },
+        stdio: [0, 1, 2],
+      })
+    }, this.extraBundleOptions.watchDebounce)
+
+    this.bundleOptions.plugins = [...this.bundleOptions.plugins.filter(Boolean), {
+      name: 'devMode',
+      setup: (build) => {
+        build.onEnd(() => {
+          return this._spawn()
+        })
+      },
+    }]
   }
 
   async build() {
@@ -320,18 +331,28 @@ export default class ServerlessBundle {
     const _build = async () => {
       await this._addCopyWatcher()
       if (this.devMode) {
+        this.ctx = await esbuild.context({
+          ...this.bundleOptions,
+          entryPoints: this.entryPoints,
+          splitting: true,
+        })
         await this?.ctx?.watch()
       } else {
-        await this?.ctx?.rebuild()
+        await pAll(
+          this.entryPoints.map((entryPoint) => {
+            return () => esbuild.build({
+              ...this.bundleOptions,
+              entryPoints: [entryPoint],
+              splitting: false,
+            })
+          }),
+          { concurrency: this.extraBundleOptions.concurrency },
+        )
       }
     }
 
     this.building = _build()
     return this.building
-  }
-
-  async watch() {
-    await this?.ctx?.watch()
   }
 
   async dispose() {
@@ -357,22 +378,22 @@ export default class ServerlessBundle {
       fs.mkdirSync('.serverless')
     }
 
-    this.packing = Promise.all(
-      Array.from(this.functions.values())
-        .map(async ({ name, filename, handler }) => {
-          await nodeZip(name, filename)
-          const func = this.serverless.service.functions[name]
-          const artifact = `.serverless/${name}.zip`
-          func.handler = handler
-          if (func.package) {
-            func.package.artifact = artifact
-          } else {
-            func.package = {
-              artifact,
-            }
+    this.packing = pAll(Array.from(this.functions.values()).map(({ name, filename, handler }) => {
+      return async () => {
+        await new Promise(resolve => setTimeout(resolve, 5000))
+        await nodeZip(name, filename)
+        const func = this.serverless.service.functions[name]
+        const artifact = `.serverless/${name}.zip`
+        func.handler = handler
+        if (func.package) {
+          func.package.artifact = artifact
+        } else {
+          func.package = {
+            artifact,
           }
-        }),
-    )
+        }
+      }
+    }), { concurrency: this.extraBundleOptions.concurrency })
 
     return this.packing
   }
@@ -449,7 +470,10 @@ export default class ServerlessBundle {
         this.cpyJobs.add(promise)
       })
 
-      Promise.all(Array.from(this.cpyJobs.values())).then(() => this._spawn())
+      const jobs = Array.from(this.cpyJobs.values())
+      if (jobs.length > 0 && this.devMode) {
+        Promise.all(jobs).then(() => this._spawn())
+      }
     }
 
     this.watcher.on('add', onFile)
@@ -457,15 +481,17 @@ export default class ServerlessBundle {
     await once(this.watcher, 'ready')
     initCopy = false
 
-    await Promise.all(initialCopyFiles.map((file) => {
-      const promise = cpy(file.filePath, file.destPath)
-        .catch((err) => {
-          log(`ServerlessBundle copy error ['${file.destPath}']: ${err.message}`)
-        }).finally(() => {
-          this.cpyJobs.delete(promise)
-        })
-      this.cpyJobs.add(promise)
-      return promise
-    }))
+    await pAll(initialCopyFiles.map((file) => {
+      return () => {
+        const promise = cpy(file.filePath, file.destPath)
+          .catch((err) => {
+            log(`ServerlessBundle copy error ['${file.destPath}']: ${err.message}`)
+          }).finally(() => {
+            this.cpyJobs.delete(promise)
+          })
+        this.cpyJobs.add(promise)
+        return promise
+      }
+    }), { concurrency: this.extraBundleOptions.concurrency })
   }
 }
