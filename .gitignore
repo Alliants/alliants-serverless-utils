@@ -4,6 +4,6 @@ example/docs
 example/bruno
 example/.serverless
 node_modules
-./package-lock.json
+package-lock.json
 .idea
 .DS_Store
