@@ -153,7 +153,7 @@ export default class ServerlessBundle {
       'before:package:createDeploymentArtifacts': async () => {
         this.renameFunctions()
         await this.init()
-        await this.build()
+        await this.build({ splitting: false })
         await this.pack()
       },
       'after:package:createDeploymentArtifacts': async () => {
@@ -162,7 +162,7 @@ export default class ServerlessBundle {
       'before:deploy:function:packageFunction': async () => {
         this.renameFunctions()
         await this.init()
-        await this.build()
+        await this.build({ splitting: false })
         await this.pack()
       },
       'after:deploy:function:packageFunction': async () => {
@@ -325,7 +325,7 @@ export default class ServerlessBundle {
     }]
   }
 
-  async build() {
+  async build({ splitting = true } = {}) {
     if (this.building) return this.building
 
     const _build = async () => {
@@ -334,7 +334,7 @@ export default class ServerlessBundle {
         this.ctx = await esbuild.context({
           ...this.bundleOptions,
           entryPoints: this.entryPoints,
-          splitting: true,
+          splitting,
         })
         await this?.ctx?.watch()
       } else {
@@ -343,7 +343,7 @@ export default class ServerlessBundle {
             return () => esbuild.build({
               ...this.bundleOptions,
               entryPoints: [entryPoint],
-              splitting: false,
+              splitting,
             })
           }),
           { concurrency: this.extraBundleOptions.concurrency },
