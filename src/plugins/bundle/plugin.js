@@ -140,7 +140,7 @@ export default class ServerlessBundle {
         log('> bundle:init')
         await this.init()
         log('> bundle:building')
-        await this.build()
+        await this.build({ useContext: true })
         await this.dispose()
         log('> bundle:done')
       },
@@ -148,12 +148,12 @@ export default class ServerlessBundle {
         this.renameFunctions()
         await this.init()
         this.initDevMode()
-        await this.build()
+        await this.build({ useContext: true })
       },
       'before:package:createDeploymentArtifacts': async () => {
         this.renameFunctions()
         await this.init()
-        await this.build({ splitting: false })
+        await this.build()
         await this.pack()
       },
       'after:package:createDeploymentArtifacts': async () => {
@@ -162,7 +162,7 @@ export default class ServerlessBundle {
       'before:deploy:function:packageFunction': async () => {
         this.renameFunctions()
         await this.init()
-        await this.build({ splitting: false })
+        await this.build()
         await this.pack()
       },
       'after:deploy:function:packageFunction': async () => {
@@ -172,21 +172,21 @@ export default class ServerlessBundle {
         this.renameFunctions()
         if (this.bundleOfflineDisabled) return
         await this.init()
-        await this.build()
+        await this.build({ useContext: true })
         await this.dispose()
       },
       'before:offline:start:init': async () => {
         this.renameFunctions()
         if (this.bundleOfflineDisabled) return
         await this.init()
-        await this.build()
+        await this.build({ useContext: true })
         await this.dispose()
       },
       'before:invoke:local:invoke': async () => {
         this.renameFunctions()
         if (this.bundleOfflineDisabled) return
         await this.init()
-        await this.build()
+        await this.build({ useContext: true })
       },
       'after:invoke:local:invoke': async () => {
         if (this.bundleOfflineDisabled) return
@@ -325,25 +325,30 @@ export default class ServerlessBundle {
     }]
   }
 
-  async build({ splitting = true } = {}) {
+  async build({ useContext = false } = {}) {
     if (this.building) return this.building
 
     const _build = async () => {
       await this._addCopyWatcher()
-      if (this.devMode) {
+      if (useContext) {
         this.ctx = await esbuild.context({
           ...this.bundleOptions,
           entryPoints: this.entryPoints,
-          splitting,
+          splitting: true,
         })
-        await this?.ctx?.watch()
+
+        if (this.devMode) {
+          await this?.ctx?.watch()
+        } else {
+          await this?.ctx?.rebuild()
+        }
       } else {
         await pAll(
           this.entryPoints.map((entryPoint) => {
             return () => esbuild.build({
               ...this.bundleOptions,
               entryPoints: [entryPoint],
-              splitting,
+              splitting: false,
             })
           }),
           { concurrency: this.extraBundleOptions.concurrency },
