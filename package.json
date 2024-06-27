@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@antfu/eslint-config": "^2.18.1",
+    "@antfu/eslint-config": "^2.21.1",
     "@apidevtools/swagger-parser": "^10.1.0",
     "@aws-sdk/client-sqs": "^3.583.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
