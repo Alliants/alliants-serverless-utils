@@ -8,8 +8,8 @@
     "dev": "sls bundle dev"
   },
   "dependencies": {
-    "@joi/date": "^2.1.1",
-    "joi": "^17.13.1"
+    "@joi/date": "2.1.1",
+    "joi": "17.13.1"
   },
   "devDependencies": {
     "alliants-serverless-utils": "file:..",

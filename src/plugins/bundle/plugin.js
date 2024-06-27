@@ -428,6 +428,11 @@ export default class ServerlessBundle {
       persistent: true,
     })
 
+    const exitEvents = ['exit', 'SIGTERM', 'SIGINT']
+    exitEvents.forEach(event => process.once(event, () => {
+      this.watcher.close().catch(() => {})
+    }))
+
     let initCopy = true
     const initialCopyFiles = []
 
