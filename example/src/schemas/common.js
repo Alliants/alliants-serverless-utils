@@ -1,6 +1,6 @@
 /**
  * Returns a list of error responses for an endpoint
- * @param {number[]} statusCodes  - list of error responses
+ * @param {number[]} statusCodes - list of error responses
  * @param {string} when - description
  * @returns {object[]}
  */

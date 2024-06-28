@@ -1,11 +1,12 @@
+/* eslint perfectionist/sort-objects: "error" */
 import { antfu } from '@antfu/eslint-config'
 
 /** @type {typeof antfu} */
 export default (config = {}, ...eslintConfig) => antfu(
   {
     ignores: [],
-    typescript: false,
     jsx: false,
+    typescript: false,
     ...config,
     formatters: {
       markdown: true,
@@ -17,6 +18,9 @@ export default (config = {}, ...eslintConfig) => antfu(
       'curly': ['error', 'multi-line'],
       'import/extensions': ['error', 'ignorePackages'],
       'import/order': 0,
+      'jsdoc/check-alignment': 'warn',
+      'jsdoc/check-indentation': 'warn',
+      'jsdoc/check-line-alignment': 'warn',
       'jsdoc/require-returns-check': 0,
       'jsdoc/require-returns-description': 0,
       'no-undef': 'error',
