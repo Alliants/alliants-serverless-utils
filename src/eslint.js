@@ -19,7 +19,6 @@ export default (config = {}, ...eslintConfig) => antfu(
       'import/extensions': ['error', 'ignorePackages'],
       'import/order': 0,
       'jsdoc/check-alignment': 'warn',
-      'jsdoc/check-indentation': 'warn',
       'jsdoc/check-line-alignment': 'warn',
       'jsdoc/require-returns-check': 0,
       'jsdoc/require-returns-description': 0,
