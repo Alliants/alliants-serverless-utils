@@ -254,6 +254,7 @@ export default class ServerlessBundle {
         ...userSettings,
         entryNames: '[name]/[dir]/[name]',
         bundle: true,
+        packages: 'bundle',
         platform: 'node',
         target: 'node20',
         format: 'esm',
