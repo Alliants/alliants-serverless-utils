@@ -1,5 +1,4 @@
 <span align="center">
-<br>
 
 ![Alliants Logo](assets/alliants-logo.png)
 
