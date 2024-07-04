@@ -21,18 +21,18 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@antfu/eslint-config": "^2.21.1",
+    "@antfu/eslint-config": "^2.21.2",
     "@apidevtools/swagger-parser": "^10.1.0",
-    "@aws-sdk/client-sqs": "^3.583.0",
+    "@aws-sdk/client-sqs": "^3.609.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
-    "@usebruno/lang": "^0.12.0",
-    "@usebruno/schema": "^0.7.0",
+    "@usebruno/lang": "^0.14.0",
+    "@usebruno/schema": "^0.9.0",
     "archiver": "^7.0.1",
     "chokidar": "^3.6.0",
     "cpy": "^11.0.1",
     "del": "^7.1.0",
-    "esbuild": "^0.22.0",
-    "eslint-plugin-format": "^0.1.1",
+    "esbuild": "^0.23.0",
+    "eslint-plugin-format": "^0.1.2",
     "joi-to-swagger": "^6.2.0",
     "js-yaml": "^4.1.0",
     "json-to-pretty-yaml": "^1.2.2",
@@ -43,11 +43,11 @@
     "picomatch": "^4.0.2",
     "serverless-offline-sqs": "^8.0.0",
     "source-map-support": "^0.5.21",
-    "testcontainers": "^10.9.0"
+    "testcontainers": "^10.10.0"
   },
   "devDependencies": {
     "decompress": "^4.2.1",
-    "execa": "^9.1.0",
+    "execa": "^9.3.0",
     "vitest": "^1.6.0"
   }
 }

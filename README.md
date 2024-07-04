@@ -1,4 +1,10 @@
-# alliants-serverless-utils
+<span align="center">
+
+![Alliants Logo](assets/alliants-logo.png)
+
+# Serverless Utils
+
+</span>
 
 Set of tools for serverless framework applications.
 

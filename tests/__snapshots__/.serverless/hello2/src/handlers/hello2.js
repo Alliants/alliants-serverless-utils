@@ -4642,7 +4642,7 @@ var require_package = __commonJS({
     module.exports = {
       name: "joi",
       description: "Object schema validation",
-      version: "17.13.1",
+      version: "17.13.3",
       repository: "git://github.com/hapijs/joi",
       main: "lib/index.js",
       types: "lib/index.d.ts",
@@ -9923,9 +9923,11 @@ var require_alternatives = __commonJS({
         const [type, code] = report.code.split(".");
         if (code !== "base") {
           complex.push({ type: schema2.type, report });
-          continue;
+        } else if (report.code === "object.base") {
+          valids.add(report.local.type);
+        } else {
+          valids.add(type);
         }
-        valids.add(type);
       }
       if (!complex.length) {
         return { errors: error("alternatives.types", { types: [...valids] }) };
@@ -11071,7 +11073,7 @@ var require_keys = __commonJS({
         typeof: "object"
       },
       flags: {
-        unknown: { default: false }
+        unknown: { default: void 0 }
       },
       terms: {
         dependencies: { init: null },
@@ -11738,7 +11740,7 @@ var require_keys = __commonJS({
       if (!unprocessed.size || !schema2.$_terms.keys && !schema2.$_terms.patterns) {
         return;
       }
-      if (prefs.stripUnknown && !schema2._flags.unknown || prefs.skipFunctions) {
+      if (prefs.stripUnknown && typeof schema2._flags.unknown === "undefined" || prefs.skipFunctions) {
         const stripUnknown = prefs.stripUnknown ? prefs.stripUnknown === true ? true : !!prefs.stripUnknown.objects : false;
         for (const key of unprocessed) {
           if (stripUnknown) {

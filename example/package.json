@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "@joi/date": "2.1.1",
-    "joi": "17.13.1"
+    "joi": "17.13.3"
   },
   "devDependencies": {
     "alliants-serverless-utils": "file:..",
-    "serverless": "^3.38.0",
-    "serverless-offline": "^13.5.0"
+    "serverless": "^3.39.0",
+    "serverless-offline": "^13.6.0"
   }
 }
