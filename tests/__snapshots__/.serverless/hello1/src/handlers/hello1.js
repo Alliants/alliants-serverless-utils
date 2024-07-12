@@ -15180,6 +15180,9 @@ var documentation = {
 var schema = {
   response: Joi.object({
     hello1: Joi.boolean().required()
+  }),
+  queryParams: Joi.object({
+    page: Joi.number()
   })
 };
 var handler = /* @__PURE__ */ __name(async () => {

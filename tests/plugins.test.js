@@ -11,12 +11,13 @@ const exec = $({ cwd: path.resolve(process.cwd(), 'example') })
 
 beforeAll(async () => {
   await deleteAsync([
+    'example/node_modules/alliants-serverless-utils',
     'example/dist',
     'example/bruno',
     'example/docs',
   ])
   console.log('> Installing dependencies')
-  const res = await exec`npm install --install-links`
+  const res = await exec`npm ci --install-links`
   console.log(`> ${res.stdout}`)
 })
 
