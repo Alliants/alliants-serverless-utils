@@ -23,6 +23,9 @@ const schema = {
   response: Joi.object({
     hello1: Joi.boolean().required(),
   }),
+  queryParams: Joi.object({
+    page: Joi.number(),
+  }),
 }
 
 const handler = async () => {

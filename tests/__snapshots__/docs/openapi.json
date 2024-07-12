@@ -338,7 +338,19 @@
         "tags": [
           "Hello One Section"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "allowEmptyValue": false,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "An object returning hello1: true.",

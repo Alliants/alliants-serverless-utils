@@ -65,6 +65,16 @@ function transformOpenapiRequestItem(request) {
         name: param.name,
         value: `{{${param.name}}}`,
         description: param.description || '',
+        type: 'query',
+        enabled: param.required,
+      })
+    } else if (param.in === 'path') {
+      brunoRequestItem.request.params.push({
+        uid: uuid(),
+        name: param.name,
+        value: `{{${param.name}}}`,
+        description: param.description || '',
+        type: 'path',
         enabled: param.required,
       })
     } else if (param.in === 'header') {
