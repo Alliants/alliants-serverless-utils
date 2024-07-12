@@ -23,6 +23,9 @@ const schema = {
   params: Joi.object({
     name: Joi.string().required(),
   }),
+  queryParams: Joi.object({
+    test: Joi.string().required(),
+  }),
   response: Joi.object({
     hello2: Joi.string().required(),
   }),

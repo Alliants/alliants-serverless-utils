@@ -154,23 +154,14 @@ export function updateUidsInCollection(_collection) {
   return collection
 }
 
-// todo
-// need to eventually get rid of supporting old collection app models
-// 1. start with making request type a constant fetched from a single place
-// 2. move references of param and replace it with query inside the app
 export function transformItemsInCollection(collection) {
   const transformItems = (items = []) => {
     each(items, (item) => {
       item.name = normalizeFileName(item.name)
 
-      if (['http', 'graphql'].includes(item.type)) {
-        item.type = `${item.type}-request`
-        if (item.request.query) {
-          item.request.params = item.request.query
-        }
-
-        delete item.request.query
-      }
+      item.request?.params?.forEach((param) => {
+        param.type = 'query'
+      })
 
       if (item.items && item.items.length) {
         transformItems(item.items)
