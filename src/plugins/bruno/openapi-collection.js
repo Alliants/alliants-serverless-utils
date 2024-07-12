@@ -76,7 +76,7 @@ function transformOpenapiRequestItem(request) {
         description: param.description || '',
         type: 'path',
         enabled: param.required,
-      });
+      })
     } else if (param.in === 'header') {
       brunoRequestItem.request.headers.push({
         uid: uuid(),
