@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@antfu/eslint-config": "~2.21.3",
+    "@antfu/eslint-config": "^2.23.0",
     "@apidevtools/swagger-parser": "^10.1.0",
     "@aws-sdk/client-sqs": "^3.614.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
@@ -43,11 +43,11 @@
     "picomatch": "^4.0.2",
     "serverless-offline-sqs": "^8.0.0",
     "source-map-support": "^0.5.21",
-    "testcontainers": "^10.10.3"
+    "testcontainers": "^10.10.4"
   },
   "devDependencies": {
     "decompress": "^4.2.1",
     "execa": "^9.3.0",
-    "vitest": "^2.0.2"
+    "vitest": "^2.0.3"
   }
 }

@@ -50,6 +50,7 @@ export default (config = {}, ...eslintConfig) => antfu(
       'style/quote-props': ['error', 'consistent-as-needed'],
       'test/no-only-tests': 'error',
       'unicorn/no-useless-spread': 'error',
+      'unused-imports/no-unused-vars': ['error', { caughtErrors: 'none' }],
       'yaml/quotes': ['error', {
         avoidEscape: true,
         prefer: 'double',
