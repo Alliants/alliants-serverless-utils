@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "decompress": "^4.2.1",
+    "eslint": "^9.8.0",
     "execa": "^9.3.0",
     "vitest": "^2.0.4"
   }
