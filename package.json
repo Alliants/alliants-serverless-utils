@@ -1,7 +1,7 @@
 {
   "name": "alliants-serverless-utils",
   "type": "module",
-  "version": "4.3.3",
+  "version": "4.3.4",
   "description": "",
   "author": "",
   "license": "ISC",
@@ -18,18 +18,19 @@
   ],
   "scripts": {
     "lint": "eslint .",
+    "lint:fix": "npm run lint -- --fix",
     "test": "vitest run"
   },
   "dependencies": {
-    "@antfu/eslint-config": "^2.23.2",
+    "@antfu/eslint-config": "^2.24.0",
     "@apidevtools/swagger-parser": "^10.1.0",
-    "@aws-sdk/client-sqs": "^3.616.0",
+    "@aws-sdk/client-sqs": "^3.621.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
     "@usebruno/lang": "^0.15.0",
     "@usebruno/schema": "^0.10.0",
     "archiver": "^7.0.1",
     "chokidar": "^3.6.0",
-    "cpy": "^11.0.1",
+    "cpy": "^11.1.0",
     "del": "^7.1.0",
     "esbuild": "^0.23.0",
     "eslint-plugin-format": "^0.1.2",
@@ -43,7 +44,7 @@
     "picomatch": "^4.0.2",
     "serverless-offline-sqs": "^8.0.0",
     "source-map-support": "^0.5.21",
-    "testcontainers": "^10.10.4"
+    "testcontainers": "^10.11.0"
   },
   "devDependencies": {
     "decompress": "^4.2.1",
