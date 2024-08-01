@@ -22,7 +22,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@antfu/eslint-config": "^2.24.0",
+    "@antfu/eslint-config": "^2.24.1",
     "@apidevtools/swagger-parser": "^10.1.0",
     "@aws-sdk/client-sqs": "^3.621.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
@@ -50,6 +50,6 @@
     "decompress": "^4.2.1",
     "eslint": "^9.8.0",
     "execa": "^9.3.0",
-    "vitest": "^2.0.4"
+    "vitest": "^2.0.5"
   }
 }
