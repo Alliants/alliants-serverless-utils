@@ -1,7 +1,7 @@
 {
   "name": "alliants-serverless-utils",
   "type": "module",
-  "version": "4.3.4",
+  "version": "4.3.6",
   "description": "",
   "author": "",
   "license": "ISC",
@@ -24,9 +24,9 @@
   "dependencies": {
     "@antfu/eslint-config": "^2.24.1",
     "@apidevtools/swagger-parser": "^10.1.0",
-    "@aws-sdk/client-sqs": "^3.621.0",
+    "@aws-sdk/client-sqs": "^3.624.0",
     "@motymichaely/serverless-openapi-documentation": "^0.5.3",
-    "@usebruno/lang": "^0.15.0",
+    "@usebruno/lang": "^0.16.0",
     "@usebruno/schema": "^0.10.0",
     "archiver": "^7.0.1",
     "chokidar": "^3.6.0",
